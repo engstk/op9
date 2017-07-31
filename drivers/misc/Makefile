@@ -71,3 +71,6 @@ obj-y				+= tri_state_key/
 obj-$(CONFIG_SIM_DETECT)	+= sim_detect.o
 obj-$(CONFIG_OEM_QMI)		+= oem_qmi_client.o
 obj-$(CONFIG_AW8697_HAPTIC)	+= aw8697_haptic/
+
+obj-$(CONFIG_FORCE_FAST_CHARGE) += fastchg.o
+
