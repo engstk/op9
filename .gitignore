@@ -141,6 +141,9 @@ x509.genkey
 /allrandom.config
 /allyes.config
 
+# Object directory
+out/
+
 # Kdevelop4
 *.kdev4
 
