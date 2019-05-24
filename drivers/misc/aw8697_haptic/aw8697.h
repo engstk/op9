@@ -414,6 +414,7 @@ struct aw8697 {
 	int index;
 	int vmax;
 	int gain;
+	int level;
 	unsigned int gun_type;
 	unsigned int bullet_nr;
 	unsigned int gun_mode;
