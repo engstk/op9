@@ -5,12 +5,8 @@
 /*******LOG TAG Declear*****************************/
 
 #define TPD_DEVICE "sec_common"
-#define TPD_INFO(a, arg...)  pr_err("[TP]"TPD_DEVICE ": " a, ##arg)
-#define TPD_DEBUG(a, arg...)\
-	do{\
-		if (tp_debug)\
-		pr_err("[TP]"TPD_DEVICE ": " a, ##arg);\
-	}while(0)
+#define TPD_INFO(a, arg...)  pr_debug("[TP]"TPD_DEVICE ": " a, ##arg)
+#define TPD_DEBUG(a, arg...)  pr_debug("[TP]"TPD_DEVICE ": " a, ##arg)
 
 /*********** sec tool operate content***********************/
 u8 lv1cmd;

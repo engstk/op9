@@ -102,7 +102,7 @@
 #define GET_BYTE_6(num)			(((num) >> 48) & 0xff)
 #define GET_BYTE_7(num)			(((num) >> 56) & 0xff)
 
-#define INFO_MSG(msg, args...)		pr_info("%s:%d info: " msg "\n", \
+#define INFO_MSG(msg, args...)		pr_debug("%s:%d info: " msg "\n", \
 					       __func__, __LINE__, ##args)
 #define ERR_MSG(msg, args...)		pr_err("%s:%d err: " msg "\n", \
 					       __func__, __LINE__, ##args)

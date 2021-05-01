@@ -128,14 +128,14 @@ static void op_freezer_handler(struct sk_buff *skb)
 			case LOOP_BACK:  /*Loop back message, only for native deamon and kernel handshake*/
 				atomic_set(&op_freezer_deamon_port, data->port);
 				op_freezer_report(LOOP_BACK, -1, -1, "loop back", -1);
-				printk(KERN_ERR "%s: --> LOOP_BACK, port = %d\n", __func__, data->port);
+				//printk(KERN_ERR "%s: --> LOOP_BACK, port = %d\n", __func__, data->port);
 				break;
 			case PKG:
-				printk(KERN_ERR "%s: --> PKG, uid = %d, pkg_cmd = %d\n", __func__, data->target_uid, data->pkg_cmd);
+				//printk(KERN_ERR "%s: --> PKG, uid = %d, pkg_cmd = %d\n", __func__, data->target_uid, data->pkg_cmd);
 				op_freezer_network_cmd_parse(data->target_uid, data->pkg_cmd);
 				break;
 			case FROZEN_TRANS:
-				printk(KERN_ERR "%s: --> FROZEN_TRANS, uid = %d\n", __func__, data->target_uid);
+				//printk(KERN_ERR "%s: --> FROZEN_TRANS, uid = %d\n", __func__, data->target_uid);
 				op_freezer_check_frozen_transcation(data->target_uid);
 				break;
 

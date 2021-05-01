@@ -1185,7 +1185,7 @@ int oplus_adfr_handle_auto_mode(u32 propval)
 	}
 
 	if (handled == 1) {
-		DSI_WARN("kVRR update auto mode nothing, unknown or repetitive value %08X\n", propval);
+		DSI_DEBUG("kVRR update auto mode nothing, unknown or repetitive value %08X\n", propval);
 	}
 
 	SDE_ATRACE_INT("auto_handled", handled);

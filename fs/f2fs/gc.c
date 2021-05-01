@@ -141,8 +141,8 @@ static inline bool of2fs_gc_wait(struct f2fs_sb_info *sbi,
 	struct f2fs_gc_kthread *gc_th = sbi->gc_thread;
 	wait_queue_head_t *fggc_wq = &gc_th->fggc_wait_queue_head;
 
-	f2fs_printk(sbi, KERN_INFO "Debug:%s:gc_opt_enable:%d",
-		__func__, sbi->gc_opt_enable);
+/*	f2fs_printk(sbi, KERN_INFO "Debug:%s:gc_opt_enable:%d",
+		__func__, sbi->gc_opt_enable); */
 	if (!sbi->gc_opt_enable) {
 		wait_event_interruptible_timeout(*wq,
 				kthread_should_stop() || freezing(current) ||
@@ -208,8 +208,8 @@ static int gc_thread_func(void *data)
 
 		if (try_to_freeze()) {
 			stat_other_skip_bggc_count(sbi);
-			f2fs_printk(sbi, KERN_INFO "Debug:%s:skip BG_GC cause try_to_freeze,wait:%ums",
-							__func__, wait_ms);
+/*			f2fs_printk(sbi, KERN_INFO "Debug:%s:skip BG_GC cause try_to_freeze,wait:%ums",
+							__func__, wait_ms); */
 			continue;
 		}
 		if (kthread_should_stop())
@@ -218,8 +218,8 @@ static int gc_thread_func(void *data)
 		if (sbi->sb->s_writers.frozen >= SB_FREEZE_WRITE) {
 			increase_sleep_time(gc_th, &wait_ms);
 			stat_other_skip_bggc_count(sbi);
-			f2fs_printk(sbi, KERN_INFO "Debug:%s:skip BG_GC cause FREEZE-writer,wait:%ums",
-							__func__, wait_ms);
+/*			f2fs_printk(sbi, KERN_INFO "Debug:%s:skip BG_GC cause FREEZE-writer,wait:%ums",
+							__func__, wait_ms); */
 			continue;
 		}
 
@@ -230,8 +230,8 @@ static int gc_thread_func(void *data)
 
 		if (!sb_start_write_trylock(sbi->sb)) {
 			stat_other_skip_bggc_count(sbi);
-			f2fs_printk(sbi, KERN_INFO "Debug:%s:skip BG_GC cause sblock,wait:%ums",
-							__func__, wait_ms);
+/*			f2fs_printk(sbi, KERN_INFO "Debug:%s:skip BG_GC cause sblock,wait:%ums",
+							__func__, wait_ms); */
 			continue;
 		}
 
@@ -256,8 +256,8 @@ static int gc_thread_func(void *data)
 
 		if (!down_write_trylock(&sbi->gc_lock)) {
 			stat_other_skip_bggc_count(sbi);
-			f2fs_printk(sbi, KERN_INFO "Debug:%s:skip BG_GC cause gclock,wait:%ums",
-							__func__, wait_ms);
+/*			f2fs_printk(sbi, KERN_INFO "Debug:%s:skip BG_GC cause gclock,wait:%ums",
+							__func__, wait_ms); */
 			goto next;
 		}
 
@@ -265,8 +265,8 @@ static int gc_thread_func(void *data)
 			increase_sleep_time(gc_th, &wait_ms);
 			up_write(&sbi->gc_lock);
 			stat_io_skip_bggc_count(sbi);
-			f2fs_printk(sbi, KERN_INFO "Debug:%s:skip BG_GC cause not idle,wait:%ums",
-							__func__, wait_ms);
+/*			f2fs_printk(sbi, KERN_INFO "Debug:%s:skip BG_GC cause not idle,wait:%ums",
+							__func__, wait_ms); */
 			goto next;
 		}
 
@@ -276,8 +276,8 @@ static int gc_thread_func(void *data)
 			increase_sleep_time(gc_th, &wait_ms);
 do_gc:
 		stat_inc_bggc_count(sbi->stat_info);
-		f2fs_printk(sbi, KERN_INFO "Debug:%s:do BG_GC,wait:%ums",
-			__func__, wait_ms);
+/*		f2fs_printk(sbi, KERN_INFO "Debug:%s:do BG_GC,wait:%ums",
+			__func__, wait_ms); */
 
 		sync_mode = F2FS_OPTION(sbi).bggc_mode == BGGC_MODE_SYNC;
 
@@ -294,7 +294,7 @@ next:
 		sb_end_write(sbi->sb);
 
 	} while (!kthread_should_stop());
-	f2fs_printk(sbi, KERN_INFO "Debug:%s:gc_opt_return", __func__);
+//	f2fs_printk(sbi, KERN_INFO "Debug:%s:gc_opt_return", __func__);
 	return 0;
 }
 

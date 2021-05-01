@@ -260,7 +260,7 @@ static int adc5_read_voltage_data(struct adc5_chip *adc, u16 *data)
 		return -EINVAL;
 	}
 	if (prop->channel == 0x3)
-		pr_err("[adc_debug][%s] voltage raw code:0x%04x\n", __func__, *data);
+		pr_debug("[adc_debug][%s] voltage raw code:0x%04x\n", __func__, *data);
 
 	return 0;
 }
@@ -386,7 +386,7 @@ static int adc7_configure(struct adc5_chip *adc,
 	ret = adc5_write(adc, ADC5_USR_CONV_REQ, &conv_req, 1);
 
 	if (prop->channel == 0x3)
-		pr_err("[adc_debug] %s %d, 0x%x, 0x%x, 0x%x, 0x%x\n",
+		pr_debug("[adc_debug] %s %d, 0x%x, 0x%x, 0x%x, 0x%x\n",
 				__func__, prop->sid, buf[0], buf[1], buf[2], buf[3]);
 	return ret;
 }
@@ -495,7 +495,7 @@ static int adc7_do_conversion(struct adc5_chip *adc,
 	ret = adc5_read_voltage_data(adc, data_volt);
 
 	if (prop->channel == 0x3)
-		pr_err("[adc_debug] %s channel[0x%x], data_volt:%d\n",
+		pr_debug("[adc_debug] %s channel[0x%x], data_volt:%d\n",
 				__func__, prop->channel, (*data_volt));
 unlock:
 	mutex_unlock(&adc->lock);
@@ -560,7 +560,7 @@ static int adc7_read_raw(struct iio_dev *indio_dev,
 			return ret;
 
 		if (prop->channel == 0x3)
-			pr_err("[adc_debug] %s mask:%d, adc_code_volt:%d, adc_code_cur:%d, val:%d\n",
+			pr_debug("[adc_debug] %s mask:%d, adc_code_volt:%d, adc_code_cur:%d, val:%d\n",
 						__func__, mask, adc_code_volt, adc_code_cur, (*val));
 		ret = qcom_adc5_hw_scale(prop->scale_fn_type,
 			&adc5_prescale_ratios[prop->prescale],
@@ -581,7 +581,7 @@ static int adc7_read_raw(struct iio_dev *indio_dev,
 		*val = (int)adc_code_volt;
 
 		if (prop->channel == 0x3)
-			pr_err("[adc_debug] %s mask:%d, adc_code_volt:%d, adc_code_cur:%d, val:%d\n",
+			pr_debug("[adc_debug] %s mask:%d, adc_code_volt:%d, adc_code_cur:%d, val:%d\n",
 						__func__, mask, adc_code_volt, adc_code_cur, (*val));
 		return IIO_VAL_INT;
 

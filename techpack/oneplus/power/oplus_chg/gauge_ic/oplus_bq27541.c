@@ -2918,7 +2918,7 @@ static int gauge_reg_dump(void) {
 		return 0;
 	}
 	if (gauge_ic->device_type == DEVICE_BQ27541 || gauge_ic->device_type == DEVICE_ZY0602) {
-		pr_err("%s: gauge ic error\n", __func__);
+		pr_debug("%s: gauge ic error\n", __func__);
 		/*return -1;*/
 	}
 	if (atomic_read(&gauge_ic->suspended) == 1) {
@@ -2993,7 +2993,7 @@ static int gauge_reg_dump(void) {
 			}
 		}
 	}
-	printk(KERN_ERR "[OPLUS_CHG] gauge regs: %s \n", buf);
+	no_printk(KERN_ERR "[OPLUS_CHG] gauge regs: %s \n", buf);
 	return 0;
 }
 

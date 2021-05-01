@@ -1092,7 +1092,7 @@ out:
 
 int qti_hwkm_handle_cmd(struct hwkm_cmd *cmd, struct hwkm_rsp *rsp)
 {
-	pr_err("%s: command = %d\n", __func__, cmd->op);
+	pr_debug("%s: command = %d\n", __func__, cmd->op);
 	switch (cmd->op) {
 	case SYSTEM_KDF:
 		return qti_handle_system_kdf(cmd, rsp);

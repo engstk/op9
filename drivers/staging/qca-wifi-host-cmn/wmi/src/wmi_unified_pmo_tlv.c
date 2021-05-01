@@ -1440,13 +1440,13 @@ static QDF_STATUS send_enable_disable_packet_filter_cmd_tlv(
 	else
 		cmd->enable = PACKET_FILTER_SET_DISABLE;
 
-	wmi_err("Packet filter enable %d for vdev_id %d", cmd->enable, vdev_id);
+	wmi_debug("Packet filter enable %d for vdev_id %d", cmd->enable, vdev_id);
 
 	wmi_mtrace(WMI_PACKET_FILTER_ENABLE_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_PACKET_FILTER_ENABLE_CMDID);
 	if (ret) {
-		wmi_err("Failed to send packet filter wmi cmd to fw");
+		wmi_debug("Failed to send packet filter wmi cmd to fw");
 		wmi_buf_free(buf);
 	}
 
@@ -1517,7 +1517,7 @@ static QDF_STATUS send_config_packet_filter_cmd_tlv(wmi_unified_t wmi_handle,
 		}
 	}
 
-	wmi_err("Packet filter action %d filter with id: %d, num_params=%d",
+	wmi_debug("Packet filter action %d filter with id: %d, num_params=%d",
 		 cmd->filter_action, cmd->filter_id, cmd->num_params);
 	/* send the command along with data */
 	wmi_mtrace(WMI_PACKET_FILTER_CONFIG_CMDID, cmd->vdev_id, 0);

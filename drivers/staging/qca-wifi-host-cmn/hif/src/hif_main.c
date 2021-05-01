@@ -793,7 +793,7 @@ QDF_STATUS hif_try_complete_tasks(struct hif_softc *scn)
 				tasklet, grp_tasklet, work);
 			return QDF_STATUS_E_FAULT;
 		}
-		hif_info("waiting for tasklets %d grp tasklets %d work %d",
+		hif_debug("waiting for tasklets %d grp tasklets %d work %d",
 			 tasklet, grp_tasklet, work);
 		msleep(10);
 	}
@@ -1689,7 +1689,7 @@ irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
 	struct hif_softc *scn = context;
 	struct hif_opaque_softc *hif_ctx = GET_HIF_OPAQUE_HDL(scn);
 
-	hif_info("wake interrupt received on irq %d", irq);
+	hif_debug("wake interrupt received on irq %d", irq);
 
 	if (hif_pm_runtime_get_monitor_wake_intr(hif_ctx)) {
 		hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);

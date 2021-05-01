@@ -100,7 +100,7 @@ static int zwb_clear_walk_pmd_entry(pmd_t *pmd, unsigned long start,
 	if (pmd_none_or_trans_huge_or_clear_bad(pmd))
 		return 0;
 #ifdef CLEAR_DEBUG
-	pr_info("clear_idle_flag entry walk_pmd_entry");
+	pr_debug("clear_idle_flag entry walk_pmd_entry");
 #endif
 	for (index = start; index != end; index += PAGE_SIZE) {
 		pte_t pte;
@@ -109,7 +109,7 @@ static int zwb_clear_walk_pmd_entry(pmd_t *pmd, unsigned long start,
 
 		if (!list_empty(&vma->vm_mm->mmap_sem.wait_list)) {
 #ifdef CLEAR_DEBUG
-			pr_info("clear_idle_flag list_empty");
+			pr_debug("clear_idle_flag list_empty");
 #endif
 			return -1;
 		}
@@ -185,7 +185,7 @@ retry:
 	mmput(mm);
 	if (err) {
 #ifdef CLEAR_DEBUG
-		pr_info("clear_idle_flag retry errno = %d", err);
+		pr_debug("clear_idle_flag retry errno = %d", err);
 #endif
 		err = 0;
 		goto retry;
@@ -224,7 +224,7 @@ static int clear_fn(void *p)
 			clear_proc[count] = tsk->pid;
 			count++;
 #if CLEAR_DEBUG
-			pr_info("clear_idle_flag processing %s (%d) \n", tsk->comm, tsk->pid);
+			pr_debug("clear_idle_flag processing %s (%d) \n", tsk->comm, tsk->pid);
 #endif
 			if (count == 2)
 				break;
@@ -248,7 +248,7 @@ static int clear_fn(void *p)
 		}
 
 #if CLEAR_DEBUG
-		pr_info("clear_idle_flag finish");
+		pr_debug("clear_idle_flag finish");
 #endif
 		if (kthread_should_stop())
 			break;

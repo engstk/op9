@@ -61,8 +61,8 @@
 #include <asm/arch_timer.h>
 
 
-#define tof_debug_info(fmt,...)		pr_err("ams-tof [INFO]  " fmt"\n", ##__VA_ARGS__);
-#define tof_debug_error(fmt,...)	 pr_err("ams-tof [ERROR] " fmt"\n", ##__VA_ARGS__);
+#define tof_debug_info(fmt,...)		pr_debug("ams-tof [INFO]  " fmt"\n", ##__VA_ARGS__);
+#define tof_debug_error(fmt,...)	 pr_debug("ams-tof [ERROR] " fmt"\n", ##__VA_ARGS__);
 #define tof_debug_warning(fmt,...)  pr_warn("ams-tof [WARN]  " fmt"\n", ##__VA_ARGS__);
 
 //#define AMS_MUTEX_DEBUG

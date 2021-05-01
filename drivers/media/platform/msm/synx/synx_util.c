@@ -1047,7 +1047,7 @@ static void synx_client_destroy(struct kref *kref)
 	memset(client_metadata, 0, sizeof(*client_metadata));
 	clear_bit(synx_util_client_index(client->id), synx_dev->bitmap);
 
-	pr_info("[sess: %u] session destroyed %s, uid: %u\n",
+	pr_debug("[sess: %u] session destroyed %s, uid: %u\n",
 		client->id, client->name, client->id);
 	vfree(client);
 }

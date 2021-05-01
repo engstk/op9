@@ -739,18 +739,18 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev) {
-		hdd_err("vdev is NULL");
+		hdd_debug("vdev is NULL");
 		goto out;
 	}
 
 	if (!ucfg_pmo_is_vdev_supports_offload(vdev)) {
-		hdd_info("offload is not supported on this vdev opmode: %d",
+		hdd_debug("offload is not supported on this vdev opmode: %d",
 				adapter->device_mode);
 			goto put_vdev;
 	}
 
 	if (!ucfg_pmo_is_vdev_connected(vdev)) {
-		hdd_info("vdev is not connected");
+		hdd_debug("vdev is not connected");
 		goto put_vdev;
 	}
 
@@ -1306,7 +1306,7 @@ hdd_suspend_wlan(void)
 	struct hdd_adapter *adapter = NULL, *next_adapter = NULL;
 	uint32_t conn_state_mask = 0;
 
-	hdd_info("WLAN being suspended by OS");
+	hdd_debug("WLAN being suspended by OS");
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -1367,7 +1367,7 @@ static int hdd_resume_wlan(void)
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 	QDF_STATUS status;
 
-	hdd_info("WLAN being resumed by OS");
+	hdd_debug("WLAN being resumed by OS");
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {

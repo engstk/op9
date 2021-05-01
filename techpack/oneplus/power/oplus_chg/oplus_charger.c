@@ -120,7 +120,7 @@ extern bool oplus_is_power_off_charging(struct oplus_warp_chip *chip);
 #define charger_xlog_printk(num, fmt, ...) \
 		do { \
 			if (enable_charger_log >= (int)num) { \
-				printk(KERN_NOTICE pr_fmt("[OPLUS_CHG][%s]"fmt), __func__, ##__VA_ARGS__); \
+				no_printk(KERN_NOTICE pr_fmt("[OPLUS_CHG][%s]"fmt), __func__, ##__VA_ARGS__); \
 			} \
 		} while (0)
 
@@ -628,14 +628,7 @@ int oplus_battery_set_property(struct power_supply *psy,
 }
 #endif /* CONFIG_OPLUS_CHG_GKI_SUPPORT */
 
-
-#define OPLUS_MIDAS_CHG_DEBUG 1
-#ifdef OPLUS_MIDAS_CHG_DEBUG
-#define	midas_debug(fmt, args...)	\
-	pr_notice("[OPLUS_MIDAS_CHG_DEBUG]" fmt, ##args)
-#else
 #define	midas_debug(fmt, args...)
-#endif /* OPLUS_MIDAS_CHG_DEBUG */
 
 static struct oplus_midas_chg {
 	int cali_passed_chg;
@@ -6500,7 +6493,7 @@ static void oplus_check_battery_vol_diff(struct oplus_chg_chip *chg)
 		vbat_cell_min = 3800;
 	}
 	vbat_cell_min = pval.intval;
-	pr_info("bat vol:(%d,%d)\n", vbat_cell_max, vbat_cell_min);
+	pr_debug("bat vol:(%d,%d)\n", vbat_cell_max, vbat_cell_min);
 	if (abs(vbat_cell_max - vbat_cell_min) > ALLOW_DIFF_VALUE) {
 		chg->check_battery_vol_count++;
 		if (chg->check_battery_vol_count > 5) {

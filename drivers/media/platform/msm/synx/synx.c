@@ -1573,7 +1573,7 @@ int synx_initialize(struct synx_session *session_id,
 	session_id->client_id = client->id;
 	mutex_unlock(&synx_dev->dev_table_lock);
 
-	pr_info("[sess: %u] session created %s\n",
+	pr_debug("[sess: %u] session created %s\n",
 		session_id->client_id, params->name);
 	return 0;
 }

@@ -2419,6 +2419,6 @@ void pci_uevent_ers(struct pci_dev *pdev, enum  pci_ers_result err_type);
 	dev_notice_ratelimited(&(pdev)->dev, fmt, ##arg)
 
 #define pci_info_ratelimited(pdev, fmt, arg...) \
-	dev_info_ratelimited(&(pdev)->dev, fmt, ##arg)
+	dev_dbg_ratelimited(&(pdev)->dev, fmt, ##arg)
 
 #endif /* LINUX_PCI_H */
