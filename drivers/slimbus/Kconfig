@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: GPL-2.0
+#
+# SLIMbus driver configuration
+#
+menuconfig SLIMBUS
+	tristate "SLIMbus support"
+	depends on HAS_IOMEM
+	help
+	  Slimbus is standard interface between baseband and
+	  application processors and peripheral components in mobile
+	  terminals.
+
+if SLIMBUS
+
+# SLIMbus controllers
+config SLIM_QCOM_CTRL
+	tristate "Qualcomm SLIMbus Manager Component"
+	depends on HAS_IOMEM
+	help
+	  Select driver if Qualcomm's SLIMbus Manager Component is
+	  programmed using Linux kernel.
+
+config SLIM_QCOM_NGD_CTRL
+	tristate "Qualcomm SLIMbus Satellite Non-Generic Device Component"
+	depends on HAS_IOMEM && DMA_ENGINE && NET
+	depends on ARCH_QCOM || COMPILE_TEST
+	select QCOM_QMI_HELPERS
+	help
+	  Select driver if Qualcomm's SLIMbus Satellite Non-Generic Device
+	  Component is programmed using Linux kernel.
+	  This is light-weight slimbus controller driver responsible for
+	  communicating with slave HW directly over the bus using messaging
+	  interface, and communicating with master component residing on ADSP
+	  for bandwidth and data-channel management.
+
+config SLIMBUS_MSM_CTRL
+	tristate "QTI SLIMbus Master Component"
+	help
+	  Select driver for Qualcomm Technologies, Inc. (QTI) Slimbus
+	  Master Component. This driver is responsible for configuring
+	  SLIMbus and performing bus administration, administration of
+	  components on the bus and dynamic channel allocation.
+
+config SLIMBUS_MSM_NGD
+	tristate "QTI Slimbus Satellite Component"
+	help
+	  Select driver for Qualcomm Technologies, Inc. (QTI) Slimbus
+	  Satellite Component. This is light-weight slimbus controller
+	  driver responsible for communicating with slave HW directly over
+	  the bus using messaging interface, and communicating with master
+	  component residing on ADSP for bandwidth and data-channel
+	  management.
+
+endif
