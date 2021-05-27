@@ -487,15 +487,15 @@ LINUXINCLUDE    := \
 include $(srctree)/techpack/oneplus/config/oneplus.conf
 LINUXINCLUDE    += -include $(srctree)/techpack/oneplus/config/oneplus.h
 
-$(info "abs_objtree: $(abs_objtree)")
+#$(info "abs_objtree: $(abs_objtree)")
 
 ifeq ($(findstring kernel-gki, $(abs_objtree)),)
 include $(srctree)/techpack/oneplus/config/coretech.conf
 LINUXINCLUDE    += -include $(srctree)/techpack/oneplus/config/coretech.h
 endif
 
-$(warning "top USERINCLUDE" $(USERINCLUDE))
-$(warning "top LINUXINCLUDE" $(LINUXINCLUDE))
+#$(warning "top USERINCLUDE" $(USERINCLUDE))
+#$(warning "top LINUXINCLUDE" $(LINUXINCLUDE))
 
 KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
 KBUILD_CFLAGS   := -Wall -Wundef -Werror=strict-prototypes -Wno-trigraphs \

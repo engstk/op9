@@ -27,7 +27,7 @@
 #define MAX_ABOARD_VERSION 9
 static struct project_info *project_info_desc;
 
-int a_board_val = 0;
+static int a_board_val = 0;
 int gpio_valueh_0 = 0;
 int gpio_valueh_1 = 0;
 int gpio_valuel_0 = 0;

@@ -30,5 +30,5 @@ endif
 obj-$(CONFIG_AW8697_HAPTIC) += vibrator/
 #endif
 
-$(warning "techpack USERINCLUDE  " $(USERINCLUDE))
-$(warning "techpack LINUXINCLUDE " $(LINUXINCLUDE))
+#$(warning "techpack USERINCLUDE  " $(USERINCLUDE))
+#$(warning "techpack LINUXINCLUDE " $(LINUXINCLUDE))

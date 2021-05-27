@@ -60,7 +60,7 @@ int get_wifi_chain_mode(void)
 }
 EXPORT_SYMBOL(get_wifi_chain_mode);
 
-static ssize_t wifichain_flag_show(struct device *dev,
+ssize_t wifichain_flag_show(struct device *dev,
 				   struct device_attribute *attr,
 				   char *buf)
 {
@@ -84,7 +84,7 @@ static ssize_t bdf_name_show(struct device *dev,
 }
 static DEVICE_ATTR_RO(bdf_name);
 
-static ssize_t wifichain_flag_store(struct device *dev,
+ssize_t wifichain_flag_store(struct device *dev,
 				    struct device_attribute *attr,
 				    const char *buf,
 				    size_t size)

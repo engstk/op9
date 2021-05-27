@@ -10,7 +10,7 @@ int hw_version = 0;
 int rf_version = 0;
 int prj_version = 0;
 
-char *enum_ftm_mode[] = {"normal",
+static char *enum_ftm_mode[] = {"normal",
 						 "fastboot",
 						 "recovery",
 						 "aging",

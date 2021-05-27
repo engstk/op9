@@ -210,9 +210,8 @@ config SLA
 	  If unsure, say n.
 
 config SLA_ALGO
-	bool "op algo"
-	default n
 	bool "OnePlus SLA algorithm"
+	default n
 	help
 	  Realtime netlink traffic monitor.
 	  The purpose of this is to monitor the ipv4 packet status and
