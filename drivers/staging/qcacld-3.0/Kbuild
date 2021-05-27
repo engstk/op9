@@ -10,7 +10,7 @@ ifeq ($(KERNEL_BUILD), y)
 	# These are provided in external module based builds
 	# Need to explicitly define for Kernel-based builds
 	MODNAME := wlan
-	WLAN_ROOT := drivers/staging/qcacld-3.0
+	WLAN_ROOT := $(srctree)/$(src)
 	WLAN_COMMON_ROOT := ../qca-wifi-host-cmn
 	WLAN_COMMON_INC := $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 	WLAN_FW_API := $(WLAN_ROOT)/../fw-api/
@@ -2530,8 +2530,6 @@ endif
 ccflags-y += $(INCS)
 
 cppflags-y +=	-DANI_OS_TYPE_ANDROID=6 \
-		-Wall\
-		-Werror\
 		-D__linux__
 
 cppflags-$(CONFIG_PTT_SOCK_SVC_ENABLE) += -DPTT_SOCK_SVC_ENABLE
@@ -3666,17 +3664,17 @@ KBUILD_CPPFLAGS += $(cppflags-y)
 # is disabling the maybe-uninitialized warning.  Re-enable it for the
 # WLAN driver.  Note that we must use ccflags-y here so that it
 # will override the kernel settings.
-ifeq ($(call cc-option-yn, -Wmaybe-uninitialized), y)
-ccflags-y += -Wmaybe-uninitialized
-ifneq (y,$(CONFIG_ARCH_MSM))
-ccflags-y += -Wframe-larger-than=4096
-endif
-endif
-ccflags-y += -Wmissing-prototypes
+#ifeq ($(call cc-option-yn, -Wmaybe-uninitialized), y)
+#ccflags-y += -Wmaybe-uninitialized
+#ifneq (y,$(CONFIG_ARCH_MSM))
+#ccflags-y += -Wframe-larger-than=4096
+#endif
+#endif
+#ccflags-y += -Wmissing-prototypes
 
-ifeq ($(call cc-option-yn, -Wheader-guard), y)
-ccflags-y += -Wheader-guard
-endif
+#ifeq ($(call cc-option-yn, -Wheader-guard), y)
+#ccflags-y += -Wheader-guard
+#endif
 # If the module name is not "wlan", then the define MULTI_IF_NAME to be the
 # same a the QCA CHIP name. The host driver will then append MULTI_IF_NAME to
 # any string that must be unique for all instances of the driver on the system.
