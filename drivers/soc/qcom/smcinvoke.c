@@ -1662,7 +1662,7 @@ static long process_accept_req(struct file *filp, unsigned int cmd,
 		 * waiting for new cb requests, hence return EAGAIN here
 		 */
 		if (!cb_txn) {
-			pr_err("%s txn %d either invalid or removed from Q\n",
+			pr_debug("%s txn %d either invalid or removed from Q\n",
 					__func__, user_args.txn_id);
 			ret = -EAGAIN;
 			goto out;
@@ -1740,7 +1740,7 @@ out:
 		kref_put(&server_info->ref_cnt, destroy_cb_server);
 
 	if (ret && ret != -ERESTARTSYS)
-		pr_err("accept thread returning with ret: %d\n", ret);
+		pr_debug("accept thread returning with ret: %d\n", ret);
 
 	return ret;
 }
