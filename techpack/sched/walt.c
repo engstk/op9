@@ -126,7 +126,7 @@ __read_mostly unsigned int sysctl_sched_window_stats_policy =
 
 unsigned int sysctl_sched_ravg_window_nr_ticks = (HZ / NR_WINDOWS_PER_SEC);
 
-unsigned int sysctl_sched_dynamic_ravg_window_enable = (HZ == 300);
+unsigned int sysctl_sched_dynamic_ravg_window_enable = (HZ == 250);
 
 /* Window size (in ns) */
 __read_mostly unsigned int sched_ravg_window = DEFAULT_SCHED_RAVG_WINDOW;
