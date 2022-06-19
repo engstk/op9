@@ -241,6 +241,6 @@ camera-y += camera_main.o
 obj-$(CONFIG_SPECTRA_CAMERA) += camera.o
 
 ifeq ($(CONFIG_SPECTRA_CAMERA),m)
-$(info "SPECTRA CAMERA IS BUILT AS DLKM")
+#$(info "SPECTRA CAMERA IS BUILT AS DLKM")
 BOARD_VENDOR_KERNEL_MODULES +=  $(KERNEL_MODULES_OUT)/camera.ko
 endif
