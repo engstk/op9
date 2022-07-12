@@ -5763,7 +5763,7 @@ static int fb_notifier_callback(struct notifier_block *nb, unsigned long event,
 		if (event == FB_EVENT_BLANK) {
 			blank = *(int *)evdata->data;
 			if (blank == FB_BLANK_UNBLANK) {
-				g_charger_chip->led_on = true;
+				g_charger_chip->led_on = false;
 				g_charger_chip->led_on_change = true;
 			} else if (blank == FB_BLANK_POWERDOWN) {
 				g_charger_chip->led_on = false;
