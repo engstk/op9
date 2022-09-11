@@ -72,9 +72,9 @@ static int oplus_warp_convert_fast_chg_type(int fast_chg_type);
 #endif
 
 #ifdef OPLUS_CHG_OP_DEF
-static oplus_chg_swarp_curr_table[CURR_LIMIT_MAX] = { 2500, 2000, 3000,
+static int oplus_chg_swarp_curr_table[CURR_LIMIT_MAX] = { 2500, 2000, 3000,
 						      4000, 5000, 6500 };
-static oplus_chg_warp_curr_table[CURR_LIMIT_MAX] = { 3600, 2500, 3000,
+static int oplus_chg_warp_curr_table[CURR_LIMIT_MAX] = { 3600, 2500, 3000,
 						     4000, 5000, 6000 };
 
 static struct oplus_adapter_struct adapter_id_table[] = {
@@ -147,7 +147,7 @@ static bool oplus_warp_is_battemp_exit(void)
 		return false;
 }
 
-void oplus_warp_battery_update()
+void oplus_warp_battery_update(void)
 {
 	struct oplus_warp_chip *chip = g_warp_chip;
 	/*
@@ -2423,7 +2423,7 @@ void oplus_warp_set_fastchg_to_warm_false(void)
 	}
 }
 
-bool oplus_warp_get_fastchg_low_temp_full()
+bool oplus_warp_get_fastchg_low_temp_full(void)
 {
 	if (!g_warp_chip) {
 		return false;
