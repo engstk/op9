@@ -494,7 +494,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Werror=strict-prototypes -Wno-trigraphs \
 		   -Wno-unsequenced -Wno-void-pointer-to-int-cast -Wno-unused-variable -Wno-pointer-to-int-cast -Wno-pointer-to-enum-cast \
 		   -Wno-fortify-source -Wno-strlcpy-strlcat-size -Wno-align-mismatch -Wno-unused-but-set-variable \
 		   -Wno-unused-result -Wno-deprecated -Wno-deprecated-declarations -Wformat=0 \
-		   -Wno-enum-conversion -Wno-array-parameter
+		   -Wno-enum-conversion -Wno-array-parameter -Wno-void-ptr-dereference
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 KBUILD_AFLAGS_KERNEL :=
