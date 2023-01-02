@@ -2078,7 +2078,8 @@ const char * const tx_master_ch_text[] = {
 	"ZERO", "SWRM_TX1_CH1", "SWRM_TX1_CH2", "SWRM_TX1_CH3", "SWRM_TX1_CH4",
 	"SWRM_TX2_CH1", "SWRM_TX2_CH2", "SWRM_TX2_CH3", "SWRM_TX2_CH4",
 	"SWRM_TX3_CH1", "SWRM_TX3_CH2", "SWRM_TX3_CH3", "SWRM_TX3_CH4",
-	"SWRM_PCM_IN",
+	"SWRM_PCM_IN", "ADC1", "ADC3", "ADC4", "DMIC0", "DMIC1", "DMIC2",
+	"DMIC4", "DMIC5", "DMIC6", "DMIC7",
 };
 
 const struct soc_enum tx_master_ch_enum =
@@ -2965,6 +2966,8 @@ static void wcd937x_soc_codec_remove(struct snd_soc_component *component)
 		wcd937x->register_notifier(wcd937x->handle,
 						&wcd937x->nblock,
 						false);
+	wcd937x_mbhc_deinit(component);
+
 	return;
 }
 
