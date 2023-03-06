@@ -4,7 +4,6 @@
 ** Description : MM kevent fb data
 ** Version : 1.0
 ** Date : 2018/12/03
-** Author : Ling.Guo@PSW.MM.Display.Stability
 **
 ** ------------------------------- Revision History: -----------
 **  <author>        <data>        <version >        <desc>
@@ -25,14 +24,14 @@ enum {
 	MM_FB_KEY_RATELIMIT_1DAY = MM_FB_KEY_RATELIMIT_1H * 24,
 };
 
-#define OPLUS_FB_ADSP_CRASH_RATELIMIT    (60 * 5 * 1000) /*ms, for mtk*/
+#define OPLUS_FB_ADSP_CRASH_RATELIMIT    (60 * 5 * 1000) //ms, for mtk
 
 enum OPLUS_MM_DIRVER_FB_EVENT_MODULE {
 	OPLUS_MM_DIRVER_FB_EVENT_DISPLAY = 0,
 	OPLUS_MM_DIRVER_FB_EVENT_AUDIO
 };
 
-/*------- multimedia bigdata feedback event id, start ------------*/
+//------- multimedia bigdata feedback event id, start ------------
 #define OPLUS_AUDIO_EVENTID_ADSP_CRASH           (10001)
 #define OPLUS_AUDIO_EVENTID_HEADSET_DET          (10009)
 
@@ -40,9 +39,9 @@ enum OPLUS_MM_DIRVER_FB_EVENT_MODULE {
 
 #define OPLUS_DISPLAY_EVENTID_GPU_FAULT          (12005)
 
-/*this id just for test or debug*/
+//this id just for test or debug
 #define OPLUS_MM_EVENTID_TEST_OR_DEBUG           (30000)
-/*------- multimedia bigdata feedback event id, end ------------*/
+//------- multimedia bigdata feedback event id, end ------------
 
 #ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
 int upload_mm_fb_kevent_to_atlas_limit(unsigned int event_id, unsigned char *payload, int limit_ms);
@@ -80,14 +79,14 @@ int upload_mm_fb_kevent_limit(enum OPLUS_MM_DIRVER_FB_EVENT_MODULE module,  unsi
 int mm_fb_kevent_init(void);
 void mm_fb_kevent_deinit(void);
 
-#else /* CONFIG_OPLUS_FEATURE_MM_FEEDBACK */
+#else //CONFIG_OPLUS_FEATURE_MM_FEEDBACK
 #define upload_mm_fb_kevent_to_atlas_limit(event_id, payload, limit_ms) (0)
 #define mm_fb_kevent(m, name, rate_limit_ms, fmt, ...)  do {} while (0)
 #define mm_fb_display_kevent(name, rate_limit_ms, fmt, ...)  do {} while (0)
 #define mm_fb_display_kevent_named(rate_limit_ms, fmt, ...)  do {} while (0)
 #define mm_fb_audio_kevent(event_id, name, rate_limit_ms, fmt, ...)  do {} while (0)
 #define mm_fb_audio_kevent_named(event_id, rate_limit_ms, fmt, ...)  do {} while (0)
-#endif /* CONFIG_OPLUS_FEATURE_MM_FEEDBACK */
+#endif //CONFIG_OPLUS_FEATURE_MM_FEEDBACK
 
 #endif /* _OPLUS_MM_KEVENT_FB_ */
 

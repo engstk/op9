@@ -1,29 +1,7 @@
-/******************************************************************************************************
- ** File: - SDM660.LA.1.0\android\vendor\oplus_app\fingerprints_hal\drivers\goodix_fp\gf_platform.c
- ** OPLUS_FEATURE_FINGERPRINT
- ** Copyright (C), 2008-2020, OPLUS Mobile Comm Corp., Ltd
- **
- ** Description:
- **      goodix fingerprint kernel device driver
- **
- ** Version: 1.0
- ** Date created: 10:10:11,11/24/2017
- ** Author: Chen.ran@Prd.BaseDrv
- ** TAG: BSP.Fingerprint.Basic
- **
- ** --------------------------- Revision History: --------------------------------
- **  <author>        <data>          <desc>
- **  Ran.Chen      2017/11/20      add vreg_step for goodix_fp
- **  Ran.Chen      2018/11/26      add for sdm855, used pwr_gpio
- **  Ran.Chen      2018/11/30      modify for powe_on/off for SDM855
- **  Ran.Chen      2018/12/15      modify for powe_on/off for SDM855
- **  Bangxiong.Wu  2019/05/09      add for sm7150, power_no/off auto instead of control by fp driver
- **  Ziqing.Guo    2019/07/18      add for Euclid
- **  oujinrong     2019/09/03      add power list for Euclid
- **  oujinrong     2019/09/19      fix coverity 798297
- **  chenpan       2019/10/24      add poweron level of gpio
- **  Ran.Chen      2019/10/24      add for parse_notify_tpinfo_flag
- *****************************************************************************************************/
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Copyright (C) 2018-2020 Oplus. All rights reserved.
+ */
 
 #define pr_fmt(fmt)    KBUILD_MODNAME ": " fmt
 
@@ -476,7 +454,20 @@ int gf_hw_reset(struct gf_dev *gf_dev, unsigned int delay_ms)
     mdelay(delay_ms);
     return 0;
 }
-
+int gf_power_reset(struct gf_dev *gf_dev)
+{
+	if (gf_dev == NULL) {
+        pr_info("Input buff is NULL.\n");
+        return -1;
+	}
+	gpio_set_value(gf_dev->reset_gpio, 0);
+	gf_power_off(gf_dev);
+	mdelay(50);
+	gf_power_on(gf_dev);
+	gpio_set_value(gf_dev->reset_gpio, 1);
+	mdelay(3);
+	return 0;
+}
 int gf_irq_num(struct gf_dev *gf_dev)
 {
     if(gf_dev == NULL) {

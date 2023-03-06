@@ -37,6 +37,7 @@
 		platform_support_project = <19825 20854>;
 		platform_support_project_dir = <19825 19825>;
 		platform_support_project_commandline = "qcom,mdss_dsi_samsung_amb655x_dsc_cmd";
+		panel = <&dsi_samsung_amb655x_dsc_cmd>;
 
 		/* SW Support Feature Control */
 		//ear_sense_support;

@@ -30,6 +30,12 @@
 #include "debug.h"
 #include "genl.h"
 
+#if IS_ENABLED(CONFIG_OPLUS_FEATURE_WIFI_BDF2)
+//Modify for: multi projects using different bdf
+#include <soc/oplus/oplus_project.h>
+#include <linux/fs.h>
+#endif /* CONFIG_OPLUS_FEATURE_WIFI_BDF2 */
+
 #define WLFW_SERVICE_WCN_INS_ID_V01	3
 #define WLFW_SERVICE_INS_ID_V01		0
 #define WLFW_CLIENT_ID			0x4b4e454c
@@ -710,11 +716,9 @@ int wlfw_cap_send_sync_msg(struct icnss_priv *priv)
 	    resp->rd_card_chain_cap == WLFW_RD_CARD_CHAIN_CAP_1x1_V01)
 		priv->is_chain1_supported = false;
 
-	icnss_pr_dbg("Capability, chip_id: 0x%x, chip_family: 0x%x, board_id: 0x%x, soc_id: 0x%x",
+	icnss_pr_dbg("Capability, chip_id: 0x%x, chip_family: 0x%x, board_id: 0x%x, soc_id: 0x%x, fw_version: 0x%x, fw_build_timestamp: %s, fw_build_id: %s",
 		     priv->chip_info.chip_id, priv->chip_info.chip_family,
-		     priv->board_id, priv->soc_id);
-
-	icnss_pr_dbg("fw_version: 0x%x, fw_build_timestamp: %s, fw_build_id: %s",
+		     priv->board_id, priv->soc_id,
 		     priv->fw_version_info.fw_version,
 		     priv->fw_version_info.fw_build_timestamp,
 		     priv->fw_build_id);
@@ -800,6 +804,11 @@ int icnss_wlfw_wlan_mac_req_send_sync(struct icnss_priv *priv,
 	struct wlfw_mac_addr_resp_msg_v01 resp = {0};
 	struct qmi_txn txn;
 	int ret;
+#if IS_ENABLED(CONFIG_OPLUS_FEATURE_WIFI_MAC)
+//revert for factory write mac address order: write from mac_address[5] to mac_address[0],so mac address[5] is first
+	int i;
+	char revert_mac[QMI_WLFW_MAC_ADDR_SIZE_V01];
+# endif /* CONFIG_OPLUS_FEATURE_WIFI_MAC */
 
 	if (!priv || !mac || mac_len != QMI_WLFW_MAC_ADDR_SIZE_V01)
 		return -EINVAL;
@@ -813,9 +822,22 @@ int icnss_wlfw_wlan_mac_req_send_sync(struct icnss_priv *priv,
 		goto out;
 	}
 
+#if IS_ENABLED(CONFIG_OPLUS_FEATURE_WIFI_MAC)
+//revert for factory write mac address order: write from mac_address[5] to mac_address[0],so mac address[5] is first
+	icnss_pr_info("Sending WLAN mac req [%pM], state: 0x%lx\n",
+		      mac, priv->state);
+	for (i = 0; i < QMI_WLFW_MAC_ADDR_SIZE_V01 ; i ++){
+		revert_mac[i] = mac[QMI_WLFW_MAC_ADDR_SIZE_V01 - i -1];
+	}
+	icnss_pr_info("Sending revert WLAN mac req [%pM], state: 0x%lx\n",
+		      revert_mac, priv->state);
+	memcpy(req.mac_addr, revert_mac, mac_len);
+#else
 	icnss_pr_dbg("Sending WLAN mac req [%pM], state: 0x%lx\n",
 			     mac, priv->state);
 	memcpy(req.mac_addr, mac, mac_len);
+#endif /* CONFIG_OPLUS_FEATURE_WIFI_MAC */
+
 	req.mac_addr_valid = 1;
 
 	ret = qmi_send_request(&priv->qmi, NULL, &txn,
@@ -996,8 +1018,9 @@ static char *icnss_bdf_type_to_str(enum icnss_bdf_type bdf_type)
 	}
 };
 
-#if IS_ENABLED(CONFIG_OPLUS_FEATURE_WIFI_BDF)
-int check_bdf_size(unsigned int download_bdf_size, char* bdf_file_name) {
+#if IS_ENABLED(CONFIG_OPLUS_FEATURE_WIFI_BDF2)
+//check if read bdf is not complete through compare the size with odm/etc/wifi bdf file return 0 if everything ok, otherwise return a non-zero value
+int check_bdf_size2(unsigned int download_bdf_size, char* bdf_file_name) {
 	char str[48];
 	struct kstat* stat = NULL;
 	int ret = 0;
@@ -1026,7 +1049,7 @@ out:
 	kfree(stat);
 	return ret;
 }
-#endif
+#endif /* CONFIG_OPLUS_FEATURE_WIFI_BDF2 */
 
 int icnss_wlfw_bdf_dnld_send_sync(struct icnss_priv *priv, u32 bdf_type)
 {
@@ -1038,9 +1061,10 @@ int icnss_wlfw_bdf_dnld_send_sync(struct icnss_priv *priv, u32 bdf_type)
 	const u8 *temp;
 	unsigned int remaining;
 	int ret = 0;
-#if IS_ENABLED(CONFIG_OPLUS_FEATURE_WIFI_BDF)
+#if IS_ENABLED(CONFIG_OPLUS_FEATURE_WIFI_BDF2)
+//Modify for: multi projects using different bdf
 	int loading_bdf_retry_cnt = 5;
-#endif
+#endif /* CONFIG_OPLUS_FEATURE_WIFI_BDF2 */
 
 	icnss_pr_dbg("Sending %s download message, state: 0x%lx, type: %d\n",
 		     icnss_bdf_type_to_str(bdf_type), priv->state, bdf_type);
@@ -1064,13 +1088,13 @@ int icnss_wlfw_bdf_dnld_send_sync(struct icnss_priv *priv, u32 bdf_type)
 	} else if (ret < 0) {
 		goto err_req_fw;
 	}
-
-#if IS_ENABLED(CONFIG_OPLUS_FEATURE_WIFI_BDF)
+#if IS_ENABLED(CONFIG_OPLUS_FEATURE_WIFI_BDF2)
 request_bdf:
 	ret = request_firmware_no_cache(&fw_entry, filename, &priv->pdev->dev);
 #else
 	ret = request_firmware(&fw_entry, filename, &priv->pdev->dev);
-#endif
+#endif /* CONFIG_OPLUS_FEATURE_WIFI_BDF2 */
+
 	if (ret) {
 		icnss_pr_err("Failed to load %s: %s ret:%d\n",
 			     icnss_bdf_type_to_str(bdf_type), filename, ret);
@@ -1084,9 +1108,9 @@ bypass_bdf:
 	icnss_pr_dbg("Downloading %s: %s, size: %u\n",
 		     icnss_bdf_type_to_str(bdf_type), filename, remaining);
 
-#if IS_ENABLED(CONFIG_OPLUS_FEATURE_WIFI_BDF)
+#if IS_ENABLED(CONFIG_OPLUS_FEATURE_WIFI_BDF2)
 	if (strncmp(filename, "bdwlan", 6) == 0
-		&& check_bdf_size(remaining, filename) && loading_bdf_retry_cnt > 0) {
+		&& check_bdf_size2(remaining, filename) && loading_bdf_retry_cnt > 0) {
 		loading_bdf_retry_cnt -= 1;
 		icnss_pr_dbg("bdf size is too small, maybe bdf is under transfer, retry loading..");
 		// sleep 400 ms
@@ -1095,7 +1119,7 @@ bypass_bdf:
 	}
 	// reset counter
 	loading_bdf_retry_cnt = 5;
-#endif
+#endif /* CONFIG_OPLUS_FEATURE_WIFI_BDF2 */
 
 	while (remaining) {
 		req->valid = 1;

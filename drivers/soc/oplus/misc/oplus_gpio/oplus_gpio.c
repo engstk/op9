@@ -187,17 +187,18 @@ static int dual_sim_det_show(struct seq_file *m, void *v)
 	int esim_status = 0;
 
 	if (det_info) {
+
 		det_info->gpio_status = -1;
 
 		/* uim2 switch to real sim */
 		esim_status = dual_sim_det_uim2_to_real_sim();
-
-		if (esim_status == 1)
+		if (esim_status == 1) {
 			msleep(5);
+		}
 
 		/* det gpio pull up */
 		pinctrl_select_state(det_info->pinctrl,
-				     det_info->pull_high_state);
+			det_info->pull_high_state);
 
 		if (det_info->reset_pin >= 0) {
 			/* reset pin set high */
@@ -231,7 +232,7 @@ static int dual_sim_det_show(struct seq_file *m, void *v)
 
 		/* det gpio set no pull   */
 		pinctrl_select_state(det_info->pinctrl,
-				     det_info->no_pull_state);
+			det_info->no_pull_state);
 
 		if (esim_status == 1) {
 			/* uim2 switch to esim after 4 seconds */
@@ -291,8 +292,8 @@ static int dual_sim_det_init(struct platform_device *pdev, void *gpio_info_ptr)
 	}
 
 	det_info->pull_high_state = pinctrl_lookup_state(
-					    det_info->pinctrl,
-					    "sim2_det_pull_high");
+			det_info->pinctrl,
+			"sim2_det_pull_high");
 
 	if (IS_ERR_OR_NULL(det_info->pull_high_state)) {
 		OPLUS_GPIO_ERR("Failed to get the sim2 pull HIGH status\n");
@@ -301,8 +302,8 @@ static int dual_sim_det_init(struct platform_device *pdev, void *gpio_info_ptr)
 	}
 
 	det_info->pull_low_state = pinctrl_lookup_state(
-					   det_info->pinctrl,
-					   "sim2_det_pull_low");
+			det_info->pinctrl,
+			"sim2_det_pull_low");
 
 	if (IS_ERR_OR_NULL(det_info->pull_low_state)) {
 		OPLUS_GPIO_ERR("Failed to get the sim2 pull LOW status\n");
@@ -311,8 +312,8 @@ static int dual_sim_det_init(struct platform_device *pdev, void *gpio_info_ptr)
 	}
 
 	det_info->no_pull_state = pinctrl_lookup_state(
-					  det_info->pinctrl,
-					  "sim2_det_no_pull");
+			det_info->pinctrl,
+			"sim2_det_no_pull");
 
 	if (IS_ERR_OR_NULL(det_info->no_pull_state)) {
 		OPLUS_GPIO_ERR("Failed to get the sim2 No pull status\n");
@@ -321,14 +322,14 @@ static int dual_sim_det_init(struct platform_device *pdev, void *gpio_info_ptr)
 	}
 
 	det_info->reset_pin = of_get_named_gpio(pdev->dev.of_node,
-						"oplus,uim-reset-pin", 0);
+			"oplus,uim-reset-pin", 0);
 
 	if (!gpio_is_valid(det_info->reset_pin)) {
 		OPLUS_GPIO_ERR("reset pin invalid\n");
 
 		if (of_property_read_string(pdev->dev.of_node, "oplus,uim-reset-pin",
-					    &out_string)
-				|| strcmp(out_string, "modem_solution")) {
+				&out_string)
+			|| strcmp(out_string, "modem_solution")) {
 			OPLUS_GPIO_ERR("modem_solution failed\n");
 			kfree(det_info);
 			return -1;
@@ -338,7 +339,7 @@ static int dual_sim_det_init(struct platform_device *pdev, void *gpio_info_ptr)
 	OPLUS_GPIO_MSG("reset_pin = %d\n", det_info->reset_pin);
 
 	pentry = proc_create_data(gpio_info->dev_node_desc, 0644, NULL,
-				  &dual_sim_det_fops, det_info);
+			&dual_sim_det_fops, det_info);
 
 	if (!pentry) {
 		OPLUS_GPIO_ERR("create proc file failed.\n");
@@ -350,7 +351,7 @@ static int dual_sim_det_init(struct platform_device *pdev, void *gpio_info_ptr)
 }
 
 static long oplus_gpio_ioctl(struct file *filp, unsigned int cmd,
-			     unsigned long data)
+	unsigned long data)
 {
 	int retval = 0;
 	void __user *arg = (void __user *)data;
@@ -362,31 +363,32 @@ static long oplus_gpio_ioctl(struct file *filp, unsigned int cmd,
 
 	gpio_info = filp->private_data;
 
-	if (gpio_info == NULL)
+	if (gpio_info == NULL) {
 		return -EFAULT;
+	}
 
 	mutex_lock(&gpio_info->gpio_lock);
 
 	OPLUS_GPIO_MSG("dev = %s cmd = %d\n",
-		       gpio_info->dev_node_desc ? gpio_info->dev_node_desc : "NULL",
-		       cmd_abs > 0 ? cmd_abs : -cmd_abs);
+		gpio_info->dev_node_desc ? gpio_info->dev_node_desc : "NULL",
+		cmd_abs > 0 ? cmd_abs : -cmd_abs);
 
 	switch (cmd) {
 	case OPLUS_GPIO_GET_OUTPUT_VALUE:
 		gpio_status = gpio_info->gpio_status;
 
-		if (copy_to_user(arg, &gpio_status, sizeof(gpio_status)))
+		if (copy_to_user(arg, &gpio_status, sizeof(gpio_status))) {
 			retval = -EFAULT;
-
+		}
 		break;
 
 	case OPLUS_GPIO_GET_INPUT_VALUE:
 		gpio_status = gpio_get_value(gpio_info->gpio);
 		gpio_info->gpio_status = gpio_status;
 
-		if (copy_to_user(arg, &gpio_status, sizeof(gpio_status)))
+		if (copy_to_user(arg, &gpio_status, sizeof(gpio_status))) {
 			retval = -EFAULT;
-
+		}
 		break;
 
 	case OPLUS_GPIO_SET_OUTPUT_VALUE_HIGH:
@@ -412,9 +414,9 @@ static long oplus_gpio_ioctl(struct file *filp, unsigned int cmd,
 		break;
 
 	case OPLUS_GPIO_GET_GPIO_MODE:
-		if (copy_to_user(arg, &gpio_info->gpio_mode, sizeof(gpio_info->gpio_mode)))
+		if (copy_to_user(arg, &gpio_info->gpio_mode, sizeof(gpio_info->gpio_mode))) {
 			retval = -EFAULT;
-
+		}
 		break;
 
 	default:
@@ -456,7 +458,7 @@ static int oplus_gpio_open(struct inode *inode, struct file *filp)
 
 
 static ssize_t oplus_gpio_read(struct file *filp, char __user *buf, size_t siz,
-			       loff_t *ppos)
+	loff_t *ppos)
 {
 	struct oplus_gpio_info *gpio_info;
 	char buff[128] = {0};
@@ -466,20 +468,22 @@ static ssize_t oplus_gpio_read(struct file *filp, char __user *buf, size_t siz,
 
 	gpio_info = filp->private_data;
 
-	if (*ppos > 0)
+	if (*ppos > 0) {
 		return 0;
+	}
 
 	mutex_lock(&gpio_info->gpio_lock);
 
 	len = sizeof(buff) / sizeof(buff[0]);
 
-	if (gpio_info->gpio_mode == 0)
+	if (gpio_info->gpio_mode == 0) {
 		gpio_info->gpio_status = gpio_get_value(gpio_info->gpio);
+	}
 
 	len = snprintf(buff, len, "gpio = %d, gpio mode = %d, gpio status = %d\n",
-		       gpio_info->gpio,
-		       gpio_info->gpio_mode,
-		       gpio_info->gpio_status);
+			gpio_info->gpio,
+			gpio_info->gpio_mode,
+			gpio_info->gpio_status);
 
 	if (copy_to_user(buf, buff, len)) {
 		mutex_unlock(&gpio_info->gpio_lock);
@@ -516,12 +520,10 @@ static void init_esim_status()
 	if (strstr(saved_command_line, "esim.status=1")) {
 		oplus_gpio_info_table[GPIO_TYPE_ESIM].gpio_status = 1;
 		oplus_gpio_info_table[GPIO_TYPE_ESIM_PRESENT].gpio_status = 0;
-
 	} else {
 		oplus_gpio_info_table[GPIO_TYPE_ESIM].gpio_status = 0;
 		oplus_gpio_info_table[GPIO_TYPE_ESIM_PRESENT].gpio_status = 1;
 	}
-
 	OPLUS_GPIO_MSG(" %d", oplus_gpio_info_table[GPIO_TYPE_ESIM].gpio_status);
 }
 
@@ -573,20 +575,21 @@ static int oplus_gpio_probe(struct platform_device *pdev)
 	for (i = 0; i < MAX_GPIOS; i++) {
 		dev_t devt = MKDEV(MAJOR(gpio_data->devt), gpio_data->base_minor + i);
 
-		if (!gpio_data->gpio_info[i].dts_desc)
+		if (!gpio_data->gpio_info[i].dts_desc) {
 			continue;
+		}
 
 		gpio_data->gpio_info[i].gpio = of_get_named_gpio(pdev->dev.of_node,
-					       gpio_data->gpio_info[i].dts_desc, 0);
+				gpio_data->gpio_info[i].dts_desc, 0);
 
 		if (gpio_is_valid(gpio_data->gpio_info[i].gpio)) {
 			status = gpio_request(gpio_data->gpio_info[i].gpio,
-					      gpio_data->gpio_info[i].dev_node_desc ? gpio_data->gpio_info[i].dev_node_desc :
-					      "NULL");
+					gpio_data->gpio_info[i].dev_node_desc ? gpio_data->gpio_info[i].dev_node_desc :
+					"NULL");
 
 			if (status) {
 				OPLUS_GPIO_ERR("failed to request gpio %d\n",
-					       gpio_data->gpio_info[i].gpio);
+					gpio_data->gpio_info[i].gpio);
 				gpio_data->gpio_info[i].gpio = -1;/* invalid */
 				continue;
 			}
@@ -612,11 +615,11 @@ static int oplus_gpio_probe(struct platform_device *pdev)
 			}
 
 			oplus_gpio_device = device_create(gpio_data->oplus_gpio_class, NULL, devt, NULL,
-							  gpio_data->gpio_info[i].dev_node_desc);
+					gpio_data->gpio_info[i].dev_node_desc);
 
 			if (IS_ERR(oplus_gpio_device)) {
 				OPLUS_GPIO_ERR("failed to create device: %s\n",
-					       gpio_data->gpio_info[i].dev_node_desc);
+					gpio_data->gpio_info[i].dev_node_desc);
 				gpio_free(gpio_data->gpio_info[i].gpio);
 				gpio_data->gpio_info[i].gpio = -1;/* invalid */
 				valid_gpio -= 1;
@@ -631,7 +634,7 @@ static int oplus_gpio_probe(struct platform_device *pdev)
 		/* init gpio */
 		if (gpio_data->gpio_info[i].gpio_mode == 1) {
 			gpio_direction_output(gpio_data->gpio_info[i].gpio,
-					      gpio_data->gpio_info[i].gpio_status);
+				gpio_data->gpio_info[i].gpio_status);
 
 		} else {
 			gpio_direction_input(gpio_data->gpio_info[i].gpio);
@@ -679,8 +682,9 @@ static int oplus_gpio_remove(struct platform_device *pdev)
 					gpio_free(gpio_data->gpio_info[i].gpio);
 					device_destroy(gpio_data->oplus_gpio_class, devt);
 
-					if (gpio_data->gpio_info[i].proc_data)
+					if (gpio_data->gpio_info[i].proc_data) {
 						kfree(gpio_data->gpio_info[i].proc_data);
+					}
 				}
 			}
 		}

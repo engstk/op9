@@ -56,11 +56,41 @@ config TOUCHPANEL_SYNAPTICS
     Say Y to enable driver for Touchpanel using Synaptics_IC
     Say M to enable driver for Touchpanel using Synaptics_IC as module.
 
+config TOUCHPANEL_FOCAL
+    tristate "TP Focal_IC enable or not for OPLUS"
+    help
+    Say Y to enable driver for Touchpanel using FOCALTECK_IC
+    Say M to enable driver for Touchpanel using FOCALTECK_IC as module.
+
+config TOUCHPANEL_GOODIX
+    tristate "TP Goodix_IC enable or not for OPLUS"
+    help
+    Say Y to enable driver for Touchpanel using GOODIX_IC
+    Say M to enable driver for Touchpanel using GOODIX_IC as module.
+
+config TOUCHPANEL_NOVA
+    tristate "TP Novatek_IC enable or not for OPLUS"
+    help
+    Say Y to enable driver for Touchpanel using NOVATECK_IC
+    Say M to enable driver for Touchpanel using NOVATECK_IC as module.
+
+config TOUCHPANEL_HIMAX
+    tristate "TP HIMAX_IC enable or not for OPLUS"
+    help
+    Say Y to enable driver for Touchpanel using HIMAX_IC
+    Say M to enable driver for Touchpanel using HIMAX_IC as module.
+
 config TOUCHPANEL_SAMSUNG
     tristate "TP samsung IC enable or not for OPLUS"
-    ---help---
-    say Y to enable driver for Touchpanel using samsung IC
+    help
+    Say Y to enable driver for Touchpanel using samsung IC
     Say M to enable driver for Touchpanel using samsung IC as module.
+
+config TOUCHPANEL_ILITEK
+    tristate "TP ilitek IC enable or not for OPLUS"
+    help
+    Say Y to enable driver for Touchpanel using ilitek IC
+    Say M to enable driver for Touchpanel using ilitek IC as module.
 config TOUCHPANEL_ST
 	tristate "TP st IC enable or not for OPLUS"
 	help
@@ -70,6 +100,29 @@ config TOUCHPANEL_ST
 if TOUCHPANEL_SYNAPTICS
 source "drivers/input/touchscreen/oplus_touchscreen_v2/Synaptics/Kconfig"
 endif
+
+if TOUCHPANEL_GOODIX
+source "drivers/input/touchscreen/oplus_touchscreen_v2/Goodix/Kconfig"
+endif
+
+if TOUCHPANEL_FOCAL
+source "drivers/input/touchscreen/oplus_touchscreen_v2/Focal/Kconfig"
+endif
+
+if TOUCHPANEL_NOVA
+source "drivers/input/touchscreen/oplus_touchscreen_v2/Novatek/Kconfig"
+endif
+
+if TOUCHPANEL_HIMAX
+source "drivers/input/touchscreen/oplus_touchscreen_v2/Himax/Kconfig"
+endif
 if TOUCHPANEL_SAMSUNG
 source "drivers/input/touchscreen/oplus_touchscreen_v2/Samsung/Kconfig"
+endif
+
+if TOUCHPANEL_ILITEK
+source "drivers/input/touchscreen/oplus_touchscreen_v2/ilitek/Kconfig"
+endif
+if TOUCHPANEL_ST
+source "drivers/input/touchscreen/oplus_touchscreen_v2/St/Kconfig"
 endif

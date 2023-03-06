@@ -579,8 +579,8 @@
 		L3C: pm8350c_l3: regulator-pm8350c-l3 {
 			regulator-name = "pm8350c_l3";
 			qcom,set = <RPMH_REGULATOR_SET_ALL>;
-			regulator-min-microvolt = <3008000>;
-			regulator-max-microvolt = <3008000>;
+			regulator-min-microvolt = <3000000>;
+			regulator-max-microvolt = <3300000>;
 			qcom,init-voltage = <3008000>;
 			qcom,init-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
@@ -827,7 +827,7 @@
 			regulator-name = "pmr735a_s2";
 			qcom,set = <RPMH_REGULATOR_SET_ALL>;
 			regulator-min-microvolt = <500000>;
-			regulator-max-microvolt = <1020000>;
+			regulator-max-microvolt = <976000>;
 			qcom,init-voltage = <852000>;
 		};
 	};

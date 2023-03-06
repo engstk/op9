@@ -1,10 +1,10 @@
 /****************************************************************
  ** Copyright (C), 2020-2030, OPLUS Mobile Comm Corp., Ltd.
+ ** VENDOR_EDIT
  ** File: - ufs_signal_quality.h
  ** Description: record ufs error interrupt information
  ** Version: 1.0
  ** Date : 2020-08-27
- ** Author: jason.wu@BSP.Storage
  **
  ** ----------------------Revision History: --------------------
  **  <author>      <date>      <version>      <desc>

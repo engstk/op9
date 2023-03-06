@@ -12,4 +12,4 @@ void save_dump_reason_to_device_info(char *buf);
 inline void save_dump_reason_to_device_info(char *reason) {}
 #endif
 
-#endif /* _DEVICE_INFO_H */
+#endif

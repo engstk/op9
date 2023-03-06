@@ -77,7 +77,7 @@ struct msm_rpmh_master_data {
 #define SENSOR_DEBUG_MEMORY_TYPE      "20006"
 
 
-
+//extern int oplus_subsystem_sleeptime(char *name, u64 *sleeptime);
 static struct sensor_fb_cxt *g_sensor_fb_cxt = NULL;
 #define MSM_ARCH_TIMER_FREQ 19200000
 static char *subsys_names[SUBSYS_COUNTS] = {"ADSP", "CDSP", "SLPI"};
@@ -108,7 +108,11 @@ struct sensor_fb_conf g_fb_conf[] = {
 	{PS_FIRST_REPORT_DELAY_COUNT_ID, "device_ps_rpt_delay", SENSOR_DEBUG_DEVICE_TYPE},
 	{PS_ORIGIN_DATA_TO_ZERO_ID, "device_ps_to_zero", SENSOR_DEBUG_DEVICE_TYPE},
 	{PS_CALI_DATA_ID, "device_ps_cali_data", SENSOR_DEBUG_DEVICE_TYPE},
-
+	{PS_OFFSET_DATA_ID, "device_ps_offset_data", SENSOR_DEVICE_TYPE},
+	{PS_PD_DATA_ID, "device_ps_pd_data", SENSOR_DEVICE_TYPE},
+	{PS_BOOT_PD_DATA_ID, "device_ps_boot_pd_data", SENSOR_DEVICE_TYPE},
+        {PS_DYNAMIC_CALI_ID, "device_ps_dynamic_cali", SENSOR_DEBUG_DEVICE_TYPE},
+        {PS_ZERO_CALI_ID, "device_ps_zero_cali", SENSOR_DEBUG_DEVICE_TYPE},
 
 	{ALS_INIT_FAIL_ID, "device_als_init_fail", SENSOR_DEVICE_TYPE},
 	{ALS_I2C_ERR_ID, "device_als_i2c_err", SENSOR_DEVICE_TYPE},
@@ -128,7 +132,9 @@ struct sensor_fb_conf g_fb_conf[] = {
 	{ACCEL_FIRST_REPORT_DELAY_COUNT_ID, "device_acc_rpt_delay", SENSOR_DEBUG_DEVICE_TYPE},
 	{ACCEL_ORIGIN_DATA_TO_ZERO_ID, "device_acc_to_zero", SENSOR_DEBUG_DEVICE_TYPE},
 	{ACCEL_CALI_DATA_ID, "device_acc_cali_data", SENSOR_DEBUG_DEVICE_TYPE},
-
+	{ACCEL_DATA_BLOCK_ID, "device_acc_data_block", SENSOR_DEVICE_TYPE},
+	{ACCEL_SUB_DATA_BLOCK_ID, "device_sub_acc_data_block", SENSOR_DEVICE_TYPE},
+        {ACCEL_DATA_FULL_RANGE_ID, "device_acc_data_full_range", SENSOR_DEVICE_TYPE},
 
 	{GYRO_INIT_FAIL_ID, "device_gyro_init_fail", SENSOR_DEVICE_TYPE},
 	{GYRO_I2C_ERR_ID, "device_gyro_i2c_err", SENSOR_DEVICE_TYPE},
@@ -181,12 +187,12 @@ struct sensor_fb_conf g_fb_conf[] = {
 	{HAL_SENSOR_NOT_FOUND, "device_hal_not_found", SENSOR_DEVICE_TYPE},
 	{HAL_QMI_ERROR, "device_hal_qmi_error", SENSOR_DEVICE_TYPE},
 	{HAL_SENSOR_TIMESTAMP_ERROR, "device_hal_ts_error", SENSOR_DEBUG_DEVICE_TYPE}
+
 };
 
-void send_uevent_to_fb(int monitor_info)
-{
-	struct device *dev = NULL;
-	char *env[2] = {0x00};
+void send_uevent_to_fb(int monitor_info) {
+	struct device *dev=NULL;
+	char *env[2]={0x00};
 
 	pr_info("monitor_info=%d\n", monitor_info);
 	dev = &g_sensor_fb_cxt->sensor_fb_dev->dev;
@@ -208,42 +214,42 @@ static int find_event_id(int16_t event_id)
 			ret = index;
 		}
 	}
-
 	return ret;
 }
 
-static struct timespec oplus_current_kernel_time(void)
-{
+static struct timespec oplus_current_kernel_time(void) {
 	struct timespec64 ts64;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0))
+        ts64 = current_kernel_time64();
+#else
 	ktime_get_coarse_real_ts64(&ts64);
+#endif
 	return timespec64_to_timespec(ts64);
 }
 
 #define MSM_ARCH_TIMER_FREQ 19200000
 static inline u64 get_time_in_msec(u64 counter)
 {
-	do_div(counter, (MSM_ARCH_TIMER_FREQ / MSEC_PER_SEC));
+	do_div(counter, (MSM_ARCH_TIMER_FREQ/MSEC_PER_SEC));
 	return counter;
 }
 
 static u64 oplus_rpmh_master_get_sleeptime(struct msm_rpmh_master_stats *record)
 {
 	uint64_t accumulated_duration = record->accumulated_duration;
-
 	/*
 	 * If a master is in sleep when reading the sleep stats from SMEM
 	 * adjust the accumulated sleep duration to show actual sleep time.
 	 * This ensures that the displayed stats are real when used for
 	 * the purpose of computing battery utilization.
 	 */
-	if (record->last_entered > record->last_exited) {
+        if (record->last_entered > record->last_exited) {
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
-		accumulated_duration += (arch_counter_get_cntvct() - record->last_entered);
+                accumulated_duration += (arch_counter_get_cntvct() - record->last_entered);
 #else
-		accumulated_duration += (__arch_counter_get_cntvct() - record->last_entered);
+                accumulated_duration += (__arch_counter_get_cntvct() - record->last_entered);
 #endif
-	}
-
+        }
 	return get_time_in_msec(accumulated_duration);
 }
 
@@ -253,37 +259,28 @@ static int oplus_subsystem_sleeptime(char *name, u64 *sleeptime)
 	size_t size = 0;
 	struct msm_rpmh_master_stats *record = NULL;
 
-	if ((name == NULL) || (sleeptime == NULL)) {
+	if((name == NULL) || (sleeptime == NULL))
 		return 0;
-	}
 
 	for (i = 0; i < ARRAY_SIZE(rpmh_masters); i++) {
-		if (strncmp(rpmh_masters[i].master_name, name, strlen(name)) != 0) {
+		if(strncmp(rpmh_masters[i].master_name, name, strlen(name)) != 0){
 			continue;
 		}
-
-		record = (struct msm_rpmh_master_stats *) qcom_smem_get(rpmh_masters[i].pid,
-				rpmh_masters[i].smem_id, &size);
-
+		record = (struct msm_rpmh_master_stats *) qcom_smem_get(rpmh_masters[i].pid, rpmh_masters[i].smem_id, &size);
 		if (!IS_ERR_OR_NULL(record)) {
-			pr_info("%s : %s:0x%x\n", __func__, rpmh_masters[i].master_name,
-				record->counts);
-			pr_info("%s found: %s:0x%x\n", __func__, rpmh_masters[i].master_name,
-				record->counts);
+			pr_info("%s : %s:0x%x\n", __func__, rpmh_masters[i].master_name, record->counts);
+			pr_info("%s found: %s:0x%x\n", __func__, rpmh_masters[i].master_name, record->counts);
 			found = 1;
 			*sleeptime = oplus_rpmh_master_get_sleeptime(record);
 			goto finish;
 		}
 	}
-
 finish:
 	return found;
 }
 
-static void subsystem_desc_init(struct subsystem_desc *subsystem_desc)
-{
+static void subsystem_desc_init(struct subsystem_desc *subsystem_desc) {
 	int index = 0;
-
 	for (index = 0; index < SUBSYS_COUNTS; index++) {
 		subsystem_desc[index].subsys_sleep_time_s = 0;
 		subsystem_desc[index].ap_sleep_time_s = 0;
@@ -295,37 +292,30 @@ static void subsystem_desc_init(struct subsystem_desc *subsystem_desc)
 	}
 }
 
-static void read_subsystem_sleep_time(struct subsystem_desc *subsystem_desc,
-				      int status)
-{
+static void read_subsystem_sleep_time(struct subsystem_desc *subsystem_desc, int status) {
 	int index = 0;
 	int ret = 0;
 	struct timespec now_time;
-
 	if (status == 1) {
 		for (index = 0; index < SUBSYS_COUNTS; index++) {
 			ret = oplus_subsystem_sleeptime(subsystem_desc[index].subsys_name,
-							&subsystem_desc[index].subsys_sleep_time_p);
+					&subsystem_desc[index].subsys_sleep_time_p);
 			now_time = oplus_current_kernel_time();
-			subsystem_desc[index].ap_sleep_time_p = (now_time.tv_sec * 1000 +
-								now_time.tv_nsec / 1000000);
+			subsystem_desc[index].ap_sleep_time_p = (now_time.tv_sec * 1000 + now_time.tv_nsec / 1000000);
 			subsystem_desc[index].is_err = ret;
 		}
-
-	} else {
+	}else {
 		for (index = 0; index < SUBSYS_COUNTS ; index++) {
 			ret = oplus_subsystem_sleeptime(subsystem_desc[index].subsys_name,
-							&subsystem_desc[index].subsys_sleep_time_s);
+					&subsystem_desc[index].subsys_sleep_time_s);
 			now_time = oplus_current_kernel_time();
-			subsystem_desc[index].ap_sleep_time_s = (now_time.tv_sec * 1000 +
-								now_time.tv_nsec / 1000000);
+			subsystem_desc[index].ap_sleep_time_s = (now_time.tv_sec * 1000 + now_time.tv_nsec / 1000000);
 			subsystem_desc[index].is_err = ret;
 		}
 	}
 }
 
-static void cal_subsystem_sleep_ratio(struct subsystem_desc *subsystem_desc)
-{
+static void cal_subsystem_sleep_ratio(struct subsystem_desc *subsystem_desc) {
 	int index = 0;
 	uint64_t subsys_sleep_ratio = 0;
 	uint64_t subsys_sleep = 0;
@@ -335,44 +325,41 @@ static void cal_subsystem_sleep_ratio(struct subsystem_desc *subsystem_desc)
 	int flag = 0;
 
 	for (index = 0; index < SUBSYS_COUNTS; index++) {
-		if (subsystem_desc[index].is_err != 0) {
+		if(subsystem_desc[index].is_err != 0) {
 			subsys_sleep = subsystem_desc[index].subsys_sleep_time_p
-				       - subsystem_desc[index].subsys_sleep_time_s;
-			ap_sleep = subsystem_desc[index].ap_sleep_time_p -
-				   subsystem_desc[index].ap_sleep_time_s;
+							- subsystem_desc[index].subsys_sleep_time_s;
+			ap_sleep = subsystem_desc[index].ap_sleep_time_p - subsystem_desc[index].ap_sleep_time_s;
 			subsys_sleep_ratio = subsys_sleep * 100 / ap_sleep;
 			subsystem_desc[index].subsys_sleep_ratio = subsys_sleep_ratio;
 			pr_info("subsys_sleep =%d, ap_sleep=%d\n", subsys_sleep, ap_sleep);
 
 			pr_info("subsys_sleep_ratio =%d, subsys_name=%s\n",
 				subsys_sleep_ratio, subsystem_desc[index].subsys_name);
-
 			if ((ap_sleep > (2 * 3600 * 1000)) && (subsys_sleep_ratio < 10)) {
-				flag = 1;
-				memset(payload, 0 , sizeof(payload));
-				scnprintf(payload, sizeof(payload),
-					  "NULL$$EventField@@%s$$FieldData@@%s$$detailData@@%llu",
-					  adsp_sleep_ratio_fied,
-					  subsystem_desc[index].subsys_name,
-					  subsys_sleep_ratio);
-#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE)
-				oplus_kevent_fb(FB_SENSOR, SENSOR_POWER_TYPE, payload);
-#endif
+					flag = 1;
+					memset(payload, 0 , sizeof(payload));
+					scnprintf(payload, sizeof(payload),
+							"NULL$$EventField@@%s$$FieldData@@%s$$detailData@@%llu",
+							adsp_sleep_ratio_fied,
+							subsystem_desc[index].subsys_name,
+							subsys_sleep_ratio);
+					#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE)
+					oplus_kevent_fb(FB_SENSOR, SENSOR_POWER_TYPE, payload);
+					#endif
 			}
 		}
 	}
-
 	if (flag == 1) {
-#ifndef DEBUG_SLEEP_RATIO
+		#ifndef DEBUG_SLEEP_RATIO
 		send_uevent_to_fb(REQ_DEBUG_SLEEP_RATIO);
-#else
+		#else
 		send_uevent_to_fb(REQ_SSR_SLEEP_RATIO);
-#endif
+		#endif
 	}
 }
 
 static ssize_t adsp_notify_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
+	struct device_attribute *attr, char *buf)
 {
 	struct sensor_fb_cxt *sensor_fb_cxt = g_sensor_fb_cxt;
 	uint16_t adsp_event_counts = 0;
@@ -380,12 +367,12 @@ static ssize_t adsp_notify_show(struct device *dev,
 	spin_lock(&sensor_fb_cxt->rw_lock);
 	adsp_event_counts = sensor_fb_cxt->adsp_event_counts;
 	spin_unlock(&sensor_fb_cxt->rw_lock);
-	pr_info("adsp_value = %d\n", adsp_event_counts);
-	return snprintf(buf, PAGE_SIZE, "%d\n", adsp_event_counts);
+	pr_info("adsp_value = %u\n", adsp_event_counts);
+	return snprintf(buf, PAGE_SIZE, "%u\n", adsp_event_counts);
 }
 
 static ssize_t adsp_notify_store(struct device *dev,
-				 struct device_attribute *attr, const char *buf, size_t count)
+	struct device_attribute *attr, const char *buf, size_t count)
 {
 	struct sensor_fb_cxt *sensor_fb_cxt = g_sensor_fb_cxt;
 	uint16_t adsp_event_counts = 0;
@@ -393,7 +380,6 @@ static ssize_t adsp_notify_store(struct device *dev,
 	int err = 0;
 
 	err = sscanf(buf, "%hu %hu", &node_type, &adsp_event_counts);
-
 	if (err < 0) {
 		pr_err("adsp_notify_store error: err = %d\n", err);
 		return err;
@@ -415,23 +401,22 @@ static ssize_t adsp_notify_store(struct device *dev,
 
 
 static ssize_t hal_info_store(struct device *dev,
-			      struct device_attribute *attr, const char *buf, size_t count)
+	struct device_attribute *attr, const char *buf, size_t count)
 {
 	uint16_t event_ct = 0;
 	uint16_t event_id = 0;
-	char strbuf[32] = {0x00};
+	char strbuf[32]= {0x00};
 	int err = 0;
 	int index = 0;
 	unsigned char payload[1024] = {0x00};
 
 
 	memset(strbuf, 0, 32);
-	memset(payload, 0 , 1024);
+	memset(payload, 0 ,1024);
 
 	pr_info("hal_info_store\n");
 
 	err = sscanf(buf, "%u %u %31s", &event_id, &event_ct, strbuf);
-
 	if (err < 0) {
 		pr_err("hal_info_store error: err = %d\n", err);
 		return count;
@@ -440,28 +425,27 @@ static ssize_t hal_info_store(struct device *dev,
 	strbuf[31] = '\0';
 
 	index = find_event_id(event_id);
-
 	if (index == -1) {
 		pr_info("nout find event_id =%d\n", event_id);
 		return count;
 	}
 
 	scnprintf(payload, sizeof(payload),
-		  "NULL$$EventField@@%s$$FieldData@@%d$$detailData@@%s",
-		  g_fb_conf[index].fb_field,
-		  event_ct,
-		  strbuf);
+				"NULL$$EventField@@%s$$FieldData@@%d$$detailData@@%s",
+				g_fb_conf[index].fb_field,
+				event_ct,
+				strbuf);
 	pr_info("payload =%s\n", payload);
 
-#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE)
+	#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE)
 	oplus_kevent_fb(FB_SENSOR, g_fb_conf[index].fb_event_id, payload);
-#endif
+	#endif
 	return count;
 }
 
 
 static ssize_t test_id_store(struct device *dev,
-			     struct device_attribute *attr, const char *buf, size_t count)
+	struct device_attribute *attr, const char *buf, size_t count)
 {
 	struct sensor_fb_cxt *sensor_fb_cxt = g_sensor_fb_cxt;
 	uint16_t adsp_event_counts = 0;
@@ -471,7 +455,7 @@ static ssize_t test_id_store(struct device *dev,
 	int err = 0;
 
 	err = sscanf(buf, "%hu %hu %hu %hu", &node_type, &adsp_event_counts, &event_id,
-		     &event_data);
+			&event_data);
 
 	if (err < 0) {
 		pr_err("test_id_store error: err = %d\n", err);
@@ -499,7 +483,7 @@ static ssize_t test_id_store(struct device *dev,
 }
 
 static ssize_t sensor_list_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
+	struct device_attribute *attr, char *buf)
 {
 	struct sensor_fb_cxt *sensor_fb_cxt = g_sensor_fb_cxt;
 	uint16_t sensor_list[2] = {0x00};
@@ -511,16 +495,16 @@ static ssize_t sensor_list_show(struct device *dev,
 
 	return snprintf(buf, PAGE_SIZE, "phy = 0x%x, virt = 0x%x\n", sensor_list[0],
 			sensor_list[1]);
+
 }
 
 static ssize_t adsp_recv_store(struct device *dev,
-			       struct device_attribute *attr, const char *buf, size_t count)
+	struct device_attribute *attr, const char *buf, size_t count)
 {
 	int err = 0;
 	int value = 0;
 
 	err = sscanf(buf, "%d", &value);
-
 	if (err < 0) {
 		pr_err("hal_info_store error: err = %d\n", err);
 		return count;
@@ -556,22 +540,9 @@ static int read_data_from_share_mem(struct sensor_fb_cxt *sensor_fb_cxt)
 	void *smem_addr = NULL;
 	struct fb_event_smem *fb_event = NULL;
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
-	int rc = 0;
-	smem_size = ALIGN4(struct fb_event_smem);
-	rc = qcom_smem_alloc(QCOM_SMEM_HOST_ANY, SMEM_SENSOR_FEEDBACK, smem_size);
-
-	if (rc < 0 && rc != -EEXIST) {
-		pr_err("%s smem_alloc fail\n", __func__);
-		rc = -EFAULT;
-		return rc;
-	}
-
-	smem_size = 0;
-#endif
 	smem_addr = qcom_smem_get(QCOM_SMEM_HOST_ANY,
-				  SMEM_SENSOR_FEEDBACK,
-				  &smem_size);
+			SMEM_SENSOR_FEEDBACK,
+			&smem_size);
 
 	if (IS_ERR(smem_addr)) {
 		pr_err("unable to acquire smem SMEM_SENSOR_FEEDBACK entry\n");
@@ -589,6 +560,22 @@ static int read_data_from_share_mem(struct sensor_fb_cxt *sensor_fb_cxt)
 	return 0;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+static int reserve_fb_share_mem()
+{
+	int rc = 0;
+	size_t smem_size = 0;
+
+	smem_size = ALIGN4(struct fb_event_smem);
+	rc = qcom_smem_alloc(QCOM_SMEM_HOST_ANY, SMEM_SENSOR_FEEDBACK, smem_size);
+	if (rc < 0 && rc != -EEXIST) {
+		pr_err("%s smem_alloc fail\n", __func__);
+		rc = -EFAULT;
+		 return rc;
+	}
+	return 0;
+}
+#endif
 
 static struct delivery_type delivery_t[2] = {
 	{
@@ -625,26 +612,24 @@ static struct proc_type proc_t[5] = {
 };
 
 int procce_special_event_id(unsigned short event_id, int count,
-			    struct sensor_fb_cxt *sensor_fb_cxt)
+	struct sensor_fb_cxt *sensor_fb_cxt)
 {
 	int ret = 0;
 	int index = 0;
 
 	if (event_id == ALAILABLE_SENSOR_LIST_ID) {
 		sensor_fb_cxt->sensor_list[0] = (uint32_t)
-						sensor_fb_cxt->fb_smem.event[count].buff[0];
+			sensor_fb_cxt->fb_smem.event[count].buff[0];
 		sensor_fb_cxt->sensor_list[1] = (uint32_t)
-						sensor_fb_cxt->fb_smem.event[count].buff[1];
+			sensor_fb_cxt->fb_smem.event[count].buff[1];
 		pr_info("sensor_list virt_sns = 0x%x, phy_sns = 0x%x\n",
 			sensor_fb_cxt->sensor_list[0], sensor_fb_cxt->sensor_list[1]);
 		ret = 1;
-
-	} else if (event_id >= POWER_ACCEL_INFO_ID
-			&& event_id <= POWER_WISE_LIGHT_INFO_ID) {
+	} else if (event_id >= POWER_ACCEL_INFO_ID && event_id <= POWER_WISE_LIGHT_INFO_ID) {
 		index = find_event_id(event_id);
-
 		if (index >= 0) {
-			pr_info("sensor_power_monitor %s: wakeup_rate:%d\n",
+			//proc_index = sensor_fb_cxt->fb_smem.event[count].buff[0] & 0x07 < 0;
+            pr_info("sensor_power_monitor %s: wakeup_rate:%d\n",
 				g_fb_conf[index].fb_field,
 				sensor_fb_cxt->fb_smem.event[count].buff[2]);
 			pr_info("sensor_power_monitor %s : proc_type: %s, %s, %s, %s, %s, %s, %s, %s\n",
@@ -669,7 +654,6 @@ int procce_special_event_id(unsigned short event_id, int count,
 				delivery_t[(sensor_fb_cxt->fb_smem.event[count].buff[1] >> 21) & 0x07].name);
 			ret = 1;
 		}
-
 	} else if (event_id == POWER_SENSOR_INFO_ID) {
 		pr_info("sensor_power_monitor: proximity:%d, wise_light:%d, ambient_light:%d, accel:%d, gyro:%d, mag:%d\n",
 			(sensor_fb_cxt->fb_smem.event[count].buff[1] >> 0) & 0x1,
@@ -679,7 +663,6 @@ int procce_special_event_id(unsigned short event_id, int count,
 			(sensor_fb_cxt->fb_smem.event[count].buff[1] >> 4) & 0x1,
 			(sensor_fb_cxt->fb_smem.event[count].buff[1] >> 5) & 0x1);
 		ret = 1;
-
 	} else if (event_id == POWER_WAKE_UP_RATE_ID) {
 		pr_info("sensor_power_monitor: normal_mode_wakeup_rate:%d, island_mode_wakeup_rate:%d\n",
 			sensor_fb_cxt->fb_smem.event[count].buff[0],
@@ -706,14 +689,12 @@ static int parse_shr_info(struct sensor_fb_cxt *sensor_fb_cxt)
 		pr_info("event_id =%d, count =%d\n", event_id, count);
 
 		index = find_event_id(event_id);
-
 		if (index == -1) {
 			pr_info("not find event_id =%d, count =%d\n", event_id, count);
 			continue;
 		}
 
 		ret = procce_special_event_id(event_id, count, sensor_fb_cxt);
-
 		if (ret == 1) {
 			continue;
 		}
@@ -721,14 +702,15 @@ static int parse_shr_info(struct sensor_fb_cxt *sensor_fb_cxt)
 		memset(payload, 0, sizeof(payload));
 		memset(detail_buff, 0, sizeof(detail_buff));
 		snprintf(detail_buff, sizeof(detail_buff), "%d %d %d",
-			 sensor_fb_cxt->fb_smem.event[count].buff[0],
-			 sensor_fb_cxt->fb_smem.event[count].buff[1],
-			 sensor_fb_cxt->fb_smem.event[count].buff[2]);
+			sensor_fb_cxt->fb_smem.event[count].buff[0],
+			sensor_fb_cxt->fb_smem.event[count].buff[1],
+			sensor_fb_cxt->fb_smem.event[count].buff[2]);
 		fb_len += scnprintf(payload, sizeof(payload),
-				    "NULL$$EventField@@%s$$FieldData@@%d$$detailData@@%s",
-				    g_fb_conf[index].fb_field,
-				    sensor_fb_cxt->fb_smem.event[count].count,
-				    detail_buff);
+				"NULL$$EventField@@%s$$FieldData@@%d$$detailData@@%s$$SensorName@@0x%x",
+				g_fb_conf[index].fb_field,
+				sensor_fb_cxt->fb_smem.event[count].count,
+				detail_buff,
+                                sensor_fb_cxt->fb_smem.event[count].name);
 		pr_info("payload1 =%s\n", payload);
 #if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE)
 		oplus_kevent_fb(FB_SENSOR, g_fb_conf[index].fb_event_id, payload);
@@ -749,7 +731,7 @@ static int sensor_report_thread(void *arg)
 
 	while (!kthread_should_stop()) {
 		wait_event_interruptible(sensor_fb_cxt->wq, test_bit(THREAD_WAKEUP,
-					 (unsigned long *)&sensor_fb_cxt->wakeup_flag));
+				(unsigned long *)&sensor_fb_cxt->wakeup_flag));
 
 		clear_bit(THREAD_WAKEUP, (unsigned long *)&sensor_fb_cxt->wakeup_flag);
 		set_bit(THREAD_SLEEP, (unsigned long *)&sensor_fb_cxt->wakeup_flag);
@@ -759,12 +741,10 @@ static int sensor_report_thread(void *arg)
 
 		if (node_type == 0) {
 			ret = read_data_from_share_mem(sensor_fb_cxt);
-
-		} else if (node_type == 2) {
+		} else if (node_type == 2) { //sleep ratio wakeup
 			read_subsystem_sleep_time(sensor_fb_cxt->subsystem_desc, 1);
 			cal_subsystem_sleep_ratio(sensor_fb_cxt->subsystem_desc);
-
-		} else if (node_type == 3) {
+		} else if (node_type == 3) { //power done
 			read_subsystem_sleep_time(sensor_fb_cxt->subsystem_desc, 0);
 
 		} else {
@@ -783,7 +763,7 @@ static int sensor_report_thread(void *arg)
 }
 
 static ssize_t sensor_list_read_proc(struct file *file, char __user *buf,
-				     size_t count, loff_t *off)
+	size_t count, loff_t *off)
 {
 	char page[128] = {0};
 	int len = 0;
@@ -791,7 +771,7 @@ static ssize_t sensor_list_read_proc(struct file *file, char __user *buf,
 			file_inode(file));
 
 	len = snprintf(page, sizeof(page), "phy = 0x%x, virt = 0x%x\n",
-		       sensor_fb_cxt->sensor_list[0], sensor_fb_cxt->sensor_list[1]);
+			sensor_fb_cxt->sensor_list[0], sensor_fb_cxt->sensor_list[1]);
 	len = simple_read_from_buffer(buf, count, off, page, strlen(page));
 	pr_info("phy = 0x%x, virt = 0x%x, len=%d \n", sensor_fb_cxt->sensor_list[0],
 		sensor_fb_cxt->sensor_list[1],
@@ -801,7 +781,7 @@ static ssize_t sensor_list_read_proc(struct file *file, char __user *buf,
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
 static const struct proc_ops sensor_list_fops = {
-	.proc_read = sensor_list_read_proc,
+        .proc_read = sensor_list_read_proc,
 };
 #else
 static struct file_operations sensor_list_fops = {
@@ -810,19 +790,20 @@ static struct file_operations sensor_list_fops = {
 };
 #endif
 
-#if defined(CONFIG_QCOM_KGSL)
+//#ifdef CONFIG_FB
+#if defined(CONFIG_DRM_MSM)
 static int sensor_fb_notifier(struct notifier_block *nb,
-			      unsigned long event, void *data)
+	unsigned long event, void *data)
 {
 	int blank;
 	struct msm_drm_notifier *evdata = data;
-	struct sensor_fb_cxt *sns_cxt = container_of(nb, struct sensor_fb_cxt,
-					fb_notif);
+	struct sensor_fb_cxt *sns_cxt = container_of(nb, struct sensor_fb_cxt, fb_notif);
 
 	if (!evdata || (evdata->id != 0)) {
 		return 0;
 	}
 
+	//if(event == MSM_DRM_EARLY_EVENT_BLANK || event == MSM_DRM_EVENT_BLANK)
 	if (event == MSM_DRM_EARLY_EVENT_BLANK) {
 		blank = *(int *)(evdata->data);
 
@@ -835,7 +816,6 @@ static int sensor_fb_notifier(struct notifier_block *nb,
 			/*wake_up_interruptible(&sensor_fb_cxt->wq);*/
 			wake_up(&sns_cxt->wq);
 			pr_info("%s: sensor_fb_notifier resume \n", __func__);
-
 		} else if (blank == MSM_DRM_BLANK_POWERDOWN) {
 			spin_lock(&sns_cxt->rw_lock);
 			sns_cxt->node_type = 3; /*sleep ratio type suspend*/
@@ -845,62 +825,54 @@ static int sensor_fb_notifier(struct notifier_block *nb,
 			/*wake_up_interruptible(&sensor_fb_cxt->wq);*/
 			wake_up(&sns_cxt->wq);
 			pr_info("%s: sensor_fb_notifier suspend \n", __func__);
-
 		} else {
 			pr_info("%s: receives wrong data EARLY_BLANK:%d\n", __func__, blank);
 		}
 	}
-
 	return 0;
 }
 #elif defined(CONFIG_FB)
 static int sensor_fb_notifier(struct notifier_block *nb,
-			      unsigned long event, void *data)
+	unsigned long event, void *data)
 {
 	int blank;
 	struct fb_event *evdata = data;
-	struct sensor_fb_cxt *sns_cxt = container_of(nb, struct sensor_fb_cxt,
-					fb_notif);
+	struct sensor_fb_cxt *sns_cxt = container_of(nb, struct sensor_fb_cxt, fb_notif);
 	struct timespec now_time;
 
 	if (evdata && evdata->data) {
+		//if(event == FB_EARLY_EVENT_BLANK || event == FB_EVENT_BLANK)
 		if (event == FB_EVENT_BLANK) {
 			blank = *(int *)evdata->data;
 
-			if (blank == FB_BLANK_UNBLANK) {
+			if (blank == FB_BLANK_UNBLANK) { //resume
 				pr_info("%s: sensor_fb_notifier resume \n", __func__);
-
-			} else if (blank == FB_BLANK_POWERDOWN) {
+			} else if (blank == FB_BLANK_POWERDOWN) { //suspend
 				pr_info("%s: sensor_fb_notifier suspend \n", __func__);
-
 			} else {
 				pr_info("%s: receives wrong data EARLY_BLANK:%d\n", __func__, blank);
 			}
 		}
 	}
-
 	return 0;
 }
-#endif /* CONFIG_QCOM_KGSL */
+#endif /* CONFIG_DRM_MSM */
+//#endif /* CONFIG_FB */
 
 
-static int create_sensor_node(struct sensor_fb_cxt *sensor_fb_cxt)
-{
+static int create_sensor_node(struct sensor_fb_cxt *sensor_fb_cxt) {
 	int err = 0;
 	struct proc_dir_entry *pentry = NULL;
 
 	err = sysfs_create_group(&sensor_fb_cxt->sensor_fb_dev->dev.kobj,
-				 &sensor_feedback_attribute_group);
-
+			&sensor_feedback_attribute_group);
 	if (err < 0) {
 		pr_err("unable to create sensor_feedback_attribute_group file err=%d\n", err);
 		goto sysfs_create_failed;
 	}
-
 	kobject_uevent(&sensor_fb_cxt->sensor_fb_dev->dev.kobj, KOBJ_ADD);
 
 	sensor_fb_cxt->proc_sns =  proc_mkdir("sns_debug", NULL);
-
 	if (!sensor_fb_cxt->proc_sns) {
 		pr_err("can't create sns_debug proc\n");
 		err = -EFAULT;
@@ -908,8 +880,7 @@ static int create_sensor_node(struct sensor_fb_cxt *sensor_fb_cxt)
 	}
 
 	pentry = proc_create_data("sensor_list", 0666, sensor_fb_cxt->proc_sns,
-				  &sensor_list_fops, sensor_fb_cxt);
-
+			&sensor_list_fops, sensor_fb_cxt);
 	if (!pentry) {
 		pr_err("create sensor_list proc failed.\n");
 		err = -EFAULT;
@@ -919,33 +890,28 @@ static int create_sensor_node(struct sensor_fb_cxt *sensor_fb_cxt)
 	return 0;
 sysfs_create_failed:
 	sysfs_remove_group(&sensor_fb_cxt->sensor_fb_dev->dev.kobj,
-			   &sensor_feedback_attribute_group);
+						&sensor_feedback_attribute_group);
 	return err;
 }
 
-static int sensor_sleep_ratio_init(struct sensor_fb_cxt *sensor_fb_cxt)
-{
+static int sensor_sleep_ratio_init(struct sensor_fb_cxt *sensor_fb_cxt) {
 	int ret = 0;
 	int err = 0;
 
 	pr_err("sensor_sleep_ratio_init,err=%d\n", err);
 	subsystem_desc_init(sensor_fb_cxt->subsystem_desc);
-#if defined(CONFIG_QCOM_KGSL)
+#if defined(CONFIG_DRM_MSM)
 	sensor_fb_cxt->fb_notif.notifier_call = sensor_fb_notifier;
 	err = msm_drm_register_client(&sensor_fb_cxt->fb_notif);
-
 	if (err) {
 		pr_err("Unable to register fb_notifier: %d\n", err);
 	}
-
 #elif defined(CONFIG_FB)
 	sensor_fb_cxt->fb_notif.notifier_call = sensor_fb_notifier;
 	err = fb_register_client(&sensor_fb_cxt->fb_notif);
-
 	if (err) {
 		pr_err("Unable to register fb_notifier: %d\n", err);
 	}
-
 #endif/*CONFIG_FB*/
 	return ret;
 }
@@ -956,7 +922,6 @@ static int sensor_feedback_probe(struct platform_device *pdev)
 	struct sensor_fb_cxt *sensor_fb_cxt = NULL;
 
 	sensor_fb_cxt = kzalloc(sizeof(struct sensor_fb_cxt), GFP_KERNEL);
-
 	if (sensor_fb_cxt == NULL) {
 		pr_err("kzalloc g_sensor_fb_cxt failed\n");
 		err = -ENOMEM;
@@ -972,24 +937,30 @@ static int sensor_feedback_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, sensor_fb_cxt);
 
 	err = create_sensor_node(sensor_fb_cxt);
-
-	if (err != 0) {
+	if(err != 0) {
 		pr_info("create_sensor_node failed\n");
 		goto create_sensor_node_failed;
+
 	}
 
 	err = sensor_sleep_ratio_init(sensor_fb_cxt);
-
-	if (err) {
+	if(err) {
 		pr_info("sensor_sleep_ratio_probe failed\n");
 		goto sleep_ratio_init_failed;
 	}
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+	err = reserve_fb_share_mem();
+	if(err) {
+		pr_info("reserve_fb_share_mem failed\n");
+		goto reserve_fb_share_mem_failed;
+	}
+#endif
+
 	/*create sensor_feedback_task thread*/
 	sensor_fb_cxt->report_task = kthread_create(sensor_report_thread,
-				     (void *)sensor_fb_cxt,
-				     "sensor_feedback_task");
-
+			(void *)sensor_fb_cxt,
+			"sensor_feedback_task");
 	if (IS_ERR(sensor_fb_cxt->report_task)) {
 		pr_info("kthread_create failed\n");
 		err = PTR_ERR(sensor_fb_cxt->report_task);
@@ -1003,6 +974,9 @@ static int sensor_feedback_probe(struct platform_device *pdev)
 	return 0;
 create_task_failed:
 sleep_ratio_init_failed:
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+reserve_fb_share_mem_failed:
+#endif
 create_sensor_node_failed:
 	kfree(sensor_fb_cxt);
 	g_sensor_fb_cxt = NULL;
@@ -1015,7 +989,7 @@ static int sensor_feedback_remove(struct platform_device *pdev)
 {
 	struct sensor_fb_cxt *sensor_fb_cxt = g_sensor_fb_cxt;
 	sysfs_remove_group(&sensor_fb_cxt->sensor_fb_dev->dev.kobj,
-			   &sensor_feedback_attribute_group);
+		&sensor_feedback_attribute_group);
 	kfree(sensor_fb_cxt);
 	g_sensor_fb_cxt = NULL;
 	return 0;
@@ -1055,6 +1029,9 @@ static int __exit sensor_feedback_exit(void)
 
 
 core_initcall(sensor_feedback_init);
+
+//module_init(sensor_feedback_init);
+//module_exit(sensor_feedback_exit);
 
 
 MODULE_AUTHOR("JangHua.Tang");

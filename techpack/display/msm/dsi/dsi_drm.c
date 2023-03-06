@@ -278,7 +278,6 @@ static void dsi_bridge_enable(struct drm_bridge *bridge)
 		if (c_bridge->dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS)
 			sde_connector_schedule_status_work(display->drm_conn,
 				true);
-		sde_connector_helper_post_kickoff(display->drm_conn);
 	}
 }
 

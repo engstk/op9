@@ -4,7 +4,6 @@
 ** Description : oplus display panel hbm feature
 ** Version : 1.0
 ** Date : 2020/07/06
-** Author : Li.Sheng@MULTIMEDIA.DISPLAY.LCD
 **
 ** ------------------------------- Revision History: -----------
 **  <author>		<data>		<version >		<desc>
@@ -202,7 +201,12 @@ int dsi_display_hbm_off(struct dsi_display *display)
 		(!strcmp(display->panel->oplus_priv.vendor_name, "AMB670YF01"))) {
 		rc = dsi_panel_tx_cmd_set(display->panel, DSI_CMD_HBM_OFF);
 		dsi_panel_set_backlight(display->panel, display->panel->bl_config.bl_level);
-	} else {
+	}
+	else if (!strcmp(display->panel->oplus_priv.vendor_name, "AMS662ZS01")) {
+		rc = dsi_panel_tx_cmd_set(display->panel, DSI_CMD_HBM_OFF);
+		dsi_panel_set_backlight(display->panel, display->panel->bl_config.bl_level);
+	}
+	else {
 		dsi_panel_set_backlight(display->panel, display->panel->bl_config.bl_level);
 		rc = dsi_panel_tx_cmd_set(display->panel, DSI_CMD_HBM_OFF);
 	}

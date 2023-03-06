@@ -766,6 +766,7 @@ int msm_msi_init(struct device *dev)
 		struct irq_desc *desc;
 		const char *devname;
 		static const char rc0_name[] = "1c00000.qcom,pcie";
+		/* static const char rc1_name[] = "1c08000.qcom,pcie"; */
 		static const char rc2_name[] = "1c10000.qcom,pcie";
 
 		desc = irq_to_desc(irq);

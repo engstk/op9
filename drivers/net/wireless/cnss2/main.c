@@ -20,9 +20,9 @@
 #include "debug.h"
 #include "genl.h"
 
-#ifdef CONFIG_OPLUS_FEATURE_WIFI_MAC
+#ifdef OPLUS_FEATURE_WIFI_MAC
 #include <soc/oplus/boot_mode.h>
-#endif
+#endif /* OPLUS_FEATURE_WIFI_MAC */
 
 #define CNSS_DUMP_FORMAT_VER		0x11
 #define CNSS_DUMP_FORMAT_VER_V2		0x22
@@ -74,9 +74,10 @@ struct cnss_driver_event {
 	void *data;
 };
 
-#ifdef CONFIG_OPLUS_FEATURE_WIFI_DCS_SWITCH
+#ifdef OPLUS_FEATURE_WIFI_DCS_SWITCH
+//Add for wifi switch monitor
 static unsigned int cnssprobestate = 0;
-#endif
+#endif /* OPLUS_FEATURE_WIFI_DCS_SWITCH */
 
 static void cnss_set_plat_priv(struct platform_device *plat_dev,
 			       struct cnss_plat_data *plat_priv)
@@ -551,7 +552,7 @@ static int cnss_setup_dms_mac(struct cnss_plat_data *plat_priv)
 	/* DTSI property use-nv-mac is used to force DMS MAC address for WLAN.
 	 * Thus assert on failure to get MAC from DMS even after retries
 	 */
-#ifndef CONFIG_OPLUS_FEATURE_WIFI_MAC
+#ifndef OPLUS_FEATURE_WIFI_MAC
 	if (plat_priv->use_nv_mac) {
 		for (i = 0; i < CNSS_DMS_QMI_CONNECTION_WAIT_RETRY; i++) {
 			if (plat_priv->dms.mac_valid)
@@ -585,7 +586,7 @@ static int cnss_setup_dms_mac(struct cnss_plat_data *plat_priv)
 			return -EINVAL;
 		}
 	}
-#endif
+#endif /* OPLUS_FEATURE_WIFI_MAC */
 qmi_send:
 	if (plat_priv->dms.mac_valid)
 		ret =
@@ -3148,7 +3149,8 @@ static const struct of_device_id cnss_of_match_table[] = {
 };
 MODULE_DEVICE_TABLE(of, cnss_of_match_table);
 
-#ifdef CONFIG_OPLUS_FEATURE_WIFI_DCS_SWITCH
+#ifdef OPLUS_FEATURE_WIFI_DCS_SWITCH
+//Add for wifi switch monitor
 static void icnss_create_fw_state_kobj(void);
 static ssize_t icnss_show_fw_ready(struct device_driver *driver, char *buf)
 {
@@ -3180,7 +3182,7 @@ struct driver_attribute fw_ready_attr = {
 	.show = icnss_show_fw_ready,
 	//read only so we don't need to impl store func
 };
-#endif
+#endif /* OPLUS_FEATURE_WIFI_DCS_SWITCH */
 
 static inline bool
 cnss_use_nv_mac(struct cnss_plat_data *plat_priv)
@@ -3244,9 +3246,10 @@ static int cnss_probe(struct platform_device *plat_dev)
 	cnss_get_cpr_info(plat_priv);
 	cnss_init_control_params(plat_priv);
 
-    #ifdef CONFIG_OPLUS_FEATURE_WIFI_DCS_SWITCH
+    #ifdef OPLUS_FEATURE_WIFI_DCS_SWITCH
+    //Add for wifi switch monitor
 	icnss_create_fw_state_kobj();
-	#endif
+	#endif /* OPLUS_FEATURE_WIFI_DCS_SWITCH */
 
 	ret = cnss_get_resources(plat_priv);
 	if (ret)
@@ -3313,9 +3316,10 @@ retry:
 	if (ret < 0)
 		cnss_pr_err("CNSS genl init failed %d\n", ret);
 
-    #ifdef CONFIG_OPLUS_FEATURE_WIFI_DCS_SWITCH
+    #ifdef OPLUS_FEATURE_WIFI_DCS_SWITCH
+    //Add for wifi switch monitor
 	cnssprobestate = CNSS_PROBE_SUCCESS;
-	#endif
+	#endif /* OPLUS_FEATURE_WIFI_DCS_SWITCH */
 
 	cnss_pr_info("Platform driver probed successfully.\n");
 
@@ -3347,9 +3351,10 @@ reset_ctx:
 	platform_set_drvdata(plat_dev, NULL);
 	cnss_set_plat_priv(plat_dev, NULL);
 out:
-    #ifdef CONFIG_OPLUS_FEATURE_WIFI_DCS_SWITCH
+    #ifdef OPLUS_FEATURE_WIFI_DCS_SWITCH
+    //Add for wifi switch monitor   
 	cnssprobestate = CNSS_PROBE_FAIL;
-    #endif
+    #endif /* OPLUS_FEATURE_WIFI_DCS_SWITCH */
 	return ret;
 }
 
@@ -3388,13 +3393,14 @@ static struct platform_driver cnss_platform_driver = {
 	},
 };
 
-#ifdef CONFIG_OPLUS_FEATURE_WIFI_DCS_SWITCH
+#ifdef OPLUS_FEATURE_WIFI_DCS_SWITCH
+//Add for wifi switch monitor
 static void icnss_create_fw_state_kobj(void) {
 	if (driver_create_file(&(cnss_platform_driver.driver), &fw_ready_attr)) {
 		cnss_pr_info("failed to create %s", fw_ready_attr.attr.name);
 	}
 }
-#endif
+#endif /* OPLUS_FEATURE_WIFI_DCS_SWITCH */
 
 static int __init cnss_initialize(void)
 {

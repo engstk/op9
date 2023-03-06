@@ -29,12 +29,6 @@ config DEVFREQ_GOV_QCOM_GPUBW_MON
 	  This governor will not be useful for non-Adreno based
 	  targets.
 
-config DRM_OPLUS_NOTIFY
-	tristate "CONFIG_DRM_OPLUS_NOTIFY"
-	depends on QCOM_KGSL
-	help
-	  Say 'Y' here to enable OPLUS DRM notify.
-
 config QCOM_ADRENO_DEFAULT_GOVERNOR
 	string "devfreq governor for the adreno core"
 	default "msm-adreno-tz" if DEVFREQ_GOV_QCOM_ADRENO_TZ
@@ -58,6 +52,18 @@ config QCOM_KGSL_IOCOHERENCY_DEFAULT
 	 support hardware I/O coherency. If enabled all cached GPU memory
 	 will use I/O coherency regardless of the user flags. If not enabled
 	 the user can still selectively enable I/O coherency with a flag.
+
+config DRM_OPLUS_NOTIFY
+	tristate "CONFIG_DRM_OPLUS_NOTIFY"
+	help
+	 Say 'y' or 'm' to support oplus notify
+	 Say 'n' to not support oplus notify
+
+config DRM_OPLUS_PANEL_NOTIFY
+	tristate "CONFIG_DRM_OPLUS_PANEL_NOTIFY"
+	help
+	 Say 'y' or 'm' to support oplus notify
+	 Say 'n' to not support oplus notify
 
 config QCOM_KGSL_IDLE_TIMEOUT
 	int

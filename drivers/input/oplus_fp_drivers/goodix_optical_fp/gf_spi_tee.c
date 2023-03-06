@@ -8,7 +8,6 @@
 **
 ** Version: 1.0
 ** Date created: 15:03:11,12/08/2017
-** Author:ChenRan@BSP.Fingerprint.Basic
 ** TAG: BSP.Fingerprint.Basic
 **
 ** --------------------------- Revision History: --------------------------------

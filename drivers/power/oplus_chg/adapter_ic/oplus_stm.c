@@ -1,4 +1,4 @@
-
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2018-2020 Oplus. All rights reserved.
  */
@@ -39,7 +39,7 @@ static void warp_uart_tx_bit(unsigned char tx_data)
 {
         static unsigned char tx_bit = BIT_START;
 		struct chip_stm *chip = the_chip;
-
+		
         switch (tx_bit) {
         case BIT_START:
                 chip->tx_byte_over = false;
@@ -76,7 +76,7 @@ static int warp_uart_rx_bit(void)
 {
         static unsigned char rx_bit = BIT_IDLE, rx_val = 0;
 		struct chip_stm *chip = the_chip;
-
+		
         switch (rx_bit) {
         case BIT_IDLE:
                 chip->rx_byte_over = false;
@@ -134,7 +134,7 @@ static unsigned char warp_uart_rx_byte(unsigned int cmd)
         unsigned int count = 0;
         unsigned int max_count = 0;
 		struct chip_stm *chip = the_chip;
-
+		
         if (cmd == Read_Addr_Line_Cmd) {
                 max_count = Read_Addr_Line_Cmd_Count;
         } else if (cmd == Write_Addr_Line_Cmd) {
@@ -186,7 +186,7 @@ static int warp_uart_write_some_addr(u8 *fw_buf, int length)
         unsigned int write_addr = 0, i = 0, fw_count = 0;
         unsigned char rx_val = 0;
 		struct chip_stm *chip = the_chip;
-
+		
         while (1) {
                 /*cmd(2 bytes) + count(1 byte) + addr(2 bytes) + data(16 bytes)*/
                 /*tx: 0xF5*/
@@ -252,7 +252,7 @@ static bool warp_uart_read_addr_line_and_check(unsigned int addr)
         bool check_result = false;
         int addr_check_err = 0;
 		struct chip_stm *chip = the_chip;
-
+		
         if (addr == STM8S_ADAPTER_FIRST_ADDR) {
                 fw_line = 0;
         }
@@ -352,11 +352,11 @@ static bool warp_adapter_update_handle(unsigned long tx_pin, unsigned long rx_pi
         unsigned char rx_last_line[18] = {0x0};
         int rc = 0;
 		struct chip_stm *chip = the_chip;
-
+		
         chg_debug(" begin\n");
         chip->uart_tx_gpio = tx_pin;
         chip->uart_rx_gpio = rx_pin;
-
+	
         chip->adapter_update_ing = true;
         chip->rx_timeout = false;
 /*step1: Tx_Erase_Addr_Line*/
@@ -513,7 +513,7 @@ static void register_adapter_devinfo(void)
 	int ret = 0;
 	char *version;
 	char *manufacture;
-
+	
 	version = "adapter";
 	manufacture = "stm8s";
 
@@ -549,16 +549,19 @@ static int __init adapter_ic_init(void)
 
 		the_chip = adapter_ic;
 
+
         chip = kzalloc(sizeof(struct oplus_adapter_chip), GFP_KERNEL);
         if (!chip) {
                 chg_err(" warp_adapter alloc fail\n");
                 return -1;
         }
 
+ //       chip->client = client;
+ //       chip->dev = &client->dev;
         chip->vops = &oplus_adapter_ops;
-
+	
         oplus_adapter_init(chip);
-
+		
 		register_adapter_devinfo();
 
         chg_debug(" success\n");
@@ -574,7 +577,7 @@ static void __init adapter_ic_exit(void)
 
 #ifndef OPLUS_CHG_OP_DEF
 subsys_initcall(adapter_ic_init);
-
+//module_exit(adapter_ic_exit);
 #else
 oplus_chg_module_register(adapter_ic);
 #endif
@@ -583,3 +586,4 @@ oplus_chg_module_register(adapter_ic);
 MODULE_DESCRIPTION("Driver for oplus adapter ic stm8s");
 MODULE_LICENSE("GPL v2");
 #endif
+

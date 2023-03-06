@@ -136,6 +136,7 @@ struct dsi_backlight_config {
 	u32 bl_normal_max_level;
 	u32 brightness_normal_max_level;
 	u32 brightness_default_level;
+	u32 bl_hbm_min_level;
 #endif /* OPLUS_BUG_STABILITY */
 
 	u32 bl_level;
@@ -177,6 +178,7 @@ struct dsi_panel_reset_config {
 #ifdef OPLUS_BUG_STABILITY
 	int panel_vout_gpio;
 	int panel_vddr_aod_en_gpio;
+	int panel_ddic_en_gpio;
 #endif
 };
 
@@ -221,12 +223,32 @@ struct dsi_panel_oplus_privite {
 	bool is_osc_support;
 	u32 osc_clk_mode0_rate;
 	u32 osc_clk_mode1_rate;
+	bool first_bl_on;
+	bool pre_bl_delay_enabled;
+	u32 pre_bl_delay_ms;
 	bool dp_support;
 	bool cabc_enabled;
+	u32 cabc_status;
 	bool dre_enabled;
 	// Add for apollo support
 	bool is_apollo_support;
 	u32 sync_brightness_level;
+	bool dc_apollo_sync_enable;
+	u32 dc_apollo_sync_brightness_level;
+	u32 dc_apollo_sync_brightness_level_pcc;
+	u32 dc_apollo_sync_brightness_level_pcc_min;
+/********************************************
+	fp_type usage:
+	bit(0):lcd capacitive fingerprint(aod/fod are not supported)
+	bit(1):oled capacitive fingerprint(only support aod)
+	bit(2):optical fingerprint old solution(dim layer and pressed icon are controlled by kernel)
+	bit(3):optical fingerprint new solution(dim layer and pressed icon are not controlled by kernel)
+	bit(4):local hbm
+	bit(5):pressed icon brightness adaptive
+	bit(6):ultrasonic fingerprint
+	bit(7):ultra low power aod
+********************************************/
+	u32 fp_type;
 };
 #endif /* OPLUS_BUG_STABILITY */
 
@@ -289,6 +311,7 @@ struct dsi_panel {
 	struct drm_panel_esd_config esd_config;
 
 	struct dsi_parser_utils utils;
+
 	bool lp11_init;
 	bool ulps_feature_enabled;
 	bool ulps_suspend_enabled;
@@ -468,7 +491,7 @@ int dsi_panel_get_io_resources(struct dsi_panel *panel,
 void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 		struct dsi_display_mode *mode, u32 frame_threshold_us);
 
-		int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt);
+int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt);
 
 int dsi_panel_alloc_cmd_packets(struct dsi_panel_cmd_set *cmd,
 		u32 packet_count);

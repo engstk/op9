@@ -187,12 +187,19 @@ static int swr_haptics_slave_enable(struct swr_haptics_dev *swr_hap)
 	if (swr_hap->slave_enabled)
 		return 0;
 
-	rc = regulator_enable(swr_hap->slave_vdd);
-	if (rc < 0) {
-		dev_err(swr_hap->dev, "%s: enable swr-slave-vdd failed, rc=%d\n",
-				__func__, rc);
-		return rc;
+#ifdef OPLUS_ARCH_EXTENDS
+	if (!IS_ERR(swr_hap->slave_vdd)) {
+#endif /* OPLUS_ARCH_EXTENDS */
+		rc = regulator_enable(swr_hap->slave_vdd);
+		if (rc < 0) {
+			dev_err(swr_hap->dev, "%s: enable swr-slave-vdd failed, rc=%d\n",
+					__func__, rc);
+			return rc;
+		}
+#ifdef OPLUS_ARCH_EXTENDS
 	}
+#endif /* OPLUS_ARCH_EXTENDS */
+
 
 	dev_dbg(swr_hap->dev, "%s: enable swr-slave-vdd success\n", __func__);
 	swr_hap->slave_enabled = true;
@@ -206,12 +213,19 @@ static int swr_haptics_slave_disable(struct swr_haptics_dev *swr_hap)
 	if (!swr_hap->slave_enabled)
 		return 0;
 
-	rc = regulator_disable(swr_hap->slave_vdd);
-	if (rc < 0) {
-		dev_err(swr_hap->dev, "%s: disable swr-slave-vdd failed, rc=%d\n",
-				__func__, rc);
-		return rc;
+#ifdef OPLUS_ARCH_EXTENDS
+	if (!IS_ERR(swr_hap->slave_vdd)) {
+#endif /* OPLUS_ARCH_EXTENDS */
+		rc = regulator_disable(swr_hap->slave_vdd);
+		if (rc < 0) {
+			dev_err(swr_hap->dev, "%s: disable swr-slave-vdd failed, rc=%d\n",
+					__func__, rc);
+			return rc;
+		}
+#ifdef OPLUS_ARCH_EXTENDS
 	}
+#endif /* OPLUS_ARCH_EXTENDS */
+
 
 	dev_dbg(swr_hap->dev, "%s: disable swr-slave-vdd success\n", __func__);
 	swr_hap->slave_enabled = false;
@@ -522,10 +536,19 @@ static int swr_haptics_probe(struct swr_device *sdev)
 	swr_hap->slave_vdd = devm_regulator_get(swr_hap->dev, "swr-slave");
 	if (IS_ERR(swr_hap->slave_vdd)) {
 		rc = PTR_ERR(swr_hap->slave_vdd);
+#ifdef OPLUS_ARCH_EXTENDS
+		dev_err(swr_hap->dev, "%s: get swr-slave-supply failed, rc=%d\n",
+				__func__, rc);
+		if (rc != -EPROBE_DEFER)
+			goto clean;
+		else
+			rc = 0;
+#else /* OPLUS_ARCH_EXTENDS */
 		if (rc != -EPROBE_DEFER)
 			dev_err(swr_hap->dev, "%s: get swr-slave-supply failed, rc=%d\n",
 					__func__, rc);
 		goto clean;
+#endif /* OPLUS_ARCH_EXTENDS */
 	}
 
 	if (of_find_property(node, "qcom,hpwr-supply", NULL)) {

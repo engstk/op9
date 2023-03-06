@@ -11,13 +11,13 @@
 //****************************************************
 //	LC898124 calibration parameters 
 //****************************************************
-#if (((SELECT_VENDOR&0x01) == 0x01) || ((SELECT_VENDOR&0x80) == 0x80))				// SEMCO or Oplus
+#if (((SELECT_VENDOR&0x01) == 0x01) || ((SELECT_VENDOR&0x80) == 0x80))				// SEMCO or Oneplus
 extern const ADJ_HALL SO2821_HallCalParameter;
 extern const ADJ_LOPGAN SO2821_LoopGainParameter;
 extern AF_PARA SO2821_OpenAfParameter;
 #endif
 
-#if (((SELECT_VENDOR&0x02) == 0x02) || ((SELECT_VENDOR&0x80) == 0x80))			// OFILM or Oplus
+#if (((SELECT_VENDOR&0x02) == 0x02) || ((SELECT_VENDOR&0x80) == 0x80))			// OFILM or Oneplus
 extern const ADJ_HALL M12337_HallCalParameter;
 extern const ADJ_LOPGAN M12337_LoopGainParameter;
 extern AF_PARA M12337_OpenAfParameter;

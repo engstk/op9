@@ -92,6 +92,14 @@
 	pxlw,soft-iris-enable;
 };
 
+&dsi_oplus_20085_s6e3_samsung_1792_1920_dsc_cmd {
+	pxlw,soft-iris-enable;
+};
+
+&dsi_oplus_20085_boe_nt37701_988_1972_cmd {
+	pxlw,soft-iris-enable;
+};
+
 /*
 &dsi_samsung_sofef00_m_video {
 	pxlw,iris-chip-enable;
@@ -103,6 +111,34 @@
 	pxlw,soft-iris-enable;
 };
 */
+
+&dsi_samsung_ams662zs01_dsc_cmd {
+	pxlw,soft-iris-enable;
+};
+
+&dsi_samsung_ams662zs01_dvt_dsc_cmd {
+	pxlw,soft-iris-enable;
+};
+
+&dsi_oplus21005_boe_1080_2400_dsc_cmd {
+	pxlw,soft-iris-enable;
+};
+
+&dsi_oplus21005_boe_1080_2400_dsc_cmd_evt1 {
+	pxlw,soft-iris-enable;
+};
+
+&dsi_oplus21005_boe_1080_2400_dsc_cmd_dvt {
+	pxlw,soft-iris-enable;
+};
+
+&dsi_oplus21005_boe_nt37701a_1080_2400_dsc_cmd {
+	pxlw,soft-iris-enable;
+};
+
+&dsi_oplus21005_boe_nt37701a_1080_2400_dsc_cmd_pvt {
+	pxlw,soft-iris-enable;
+};
 
 &mdss_mdp {
 	pxlw,dsi-display-primary-active = "qcom,mdss_dsi_samsung_amb670yf01_dsc_cmd";

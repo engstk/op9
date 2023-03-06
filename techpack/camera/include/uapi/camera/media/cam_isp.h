@@ -129,7 +129,6 @@
 #define CAM_ISP_GENERIC_BLOB_TYPE_CSID_QCFA_CONFIG          12
 #define CAM_ISP_GENERIC_BLOB_TYPE_SENSOR_BLANKING_CONFIG    13
 #define CAM_ISP_GENERIC_BLOB_TYPE_TPG_CORE_CONFIG           14
-#define CAM_ISP_GENERIC_BLOB_TYPE_ANCHOR_CONFIG             15
 #define CAM_ISP_GENERIC_BLOB_TYPE_SFE_CLOCK_CONFIG          21
 #define CAM_ISP_GENERIC_BLOB_TYPE_SFE_CORE_CONFIG           22
 #define CAM_ISP_GENERIC_BLOB_TYPE_SFE_OUT_CONFIG            23
@@ -793,17 +792,6 @@ struct cam_isp_tpg_core_config {
 	__u32   qcfa_en;
 	__u32   pix_pattern;
 	__u32   tpg_params[6];
-} __attribute__((packed));
-
-/**
- * struct cam_isp_anchor_config - ISP anchor configuration
- *
- * @anchor_instance   : Indicate whether it is anchor instance
- * @reserved          : reserved
- */
-struct cam_isp_anchor_config {
-	__u32   anchor_instance;
-	__u32   reserved;
 } __attribute__((packed));
 
 /**

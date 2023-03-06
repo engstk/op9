@@ -1,32 +1,8 @@
-/************************************************************************************
- ** File: - SDM660.LA.1.0\android\vendor\oplus_app\fingerprints_hal\drivers\goodix_fp\gf_spi.c
- ** OPLUS_FEATURE_FINGERPRINT
- ** Copyright (C), 2008-2020, OPLUS Mobile Comm Corp., Ltd
- **
- ** Description:
- **      goodix fingerprint kernel device driver
- **
- ** Version: 1.0
- ** Date created: 16:20:11,12/07/2017
- ** Author: Ziqing.guo@Prd.BaseDrv
- ** TAG: BSP.Fingerprint.Basic
- **
- ** --------------------------- Revision History: --------------------------------
- **  <author>        <data>          <desc>
- **  Ziqing.guo      2017/07/12      create the file for goodix 5288
- **  Ziqing.guo      2017/08/29      fix the problem of failure after restarting fingerprintd
- **  Ziqing.guo      2017/08/31      add goodix 3268,5288
- **  Ziqing.guo      2017/09/11      add gf_cmd_wakelock
- **  Ran.Chen        2017/11/30      add vreg_step for goodix_fp
- **  Ran.Chen        2017/12/07      remove power_off in release for Power supply timing
- **  Ran.Chen        2018/01/29      modify for fp_id, Code refactoring
- **  Ran.Chen        2018/11/27      remove define MSM_DRM_ONSCREENFINGERPRINT_EVENT
- **  Ran.Chen        2018/12/15      modify for power off in ftm mode (for SDM855)
- **  Ran.Chen        2019/03/17      remove power off in ftm mode (for SDM855)
- **  Bangxiong.Wu    2019/05/10      add for SM7150 (MSM_19031 MSM_19331)
- **  Ran.Chen        2019/05/09      add for GF_IOC_CLEAN_TOUCH_FLAG
- **  Ziqing.guo      2019/07/18      add for Euclid
- ************************************************************************************/
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Copyright (C) 2018-2020 Oplus. All rights reserved.
+ */
+
 #define pr_fmt(fmt)    KBUILD_MODNAME ": " fmt
 
 #include <linux/init.h>
@@ -68,20 +44,24 @@
 #if IS_ENABLED(CONFIG_DRM_OPLUS_NOTIFY) || IS_ENABLED(CONFIG_DRM_MSM)
 #include <linux/msm_drm_notify.h>
 #endif
-#include <soc/oplus/boot_mode.h>
+#include <soc/oplus/system/boot_mode.h>
 #include <linux/version.h>
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
 #include <linux/uaccess.h>
 #endif
 
-#ifndef FB_EARLY_EVENT_BLANK
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
 #define FB_EARLY_EVENT_BLANK    0x10
 #endif
 
 #define VER_MAJOR   1
 #define VER_MINOR   2
 #define PATCH_LEVEL 9
+
+#ifndef MSM_DRM_ONSCREENFINGERPRINT_EVENT
+#define MSM_DRM_ONSCREENFINGERPRINT_EVENT 0x10
+#endif
 
 #define WAKELOCK_HOLD_TIME 500 /* in ms */
 #define SENDCMD_WAKELOCK_HOLD_TIME 1000 /* in ms */
@@ -123,6 +103,8 @@ struct gf_key_map maps[] = {
     {EV_KEY, GF_NAV_INPUT_HEAVY},
 #endif
 };
+
+static int gf_opticalfp_irq_handler(struct fp_underscreen_info *tp_info);
 
 static void gf_enable_irq(struct gf_dev *gf_dev)
 {
@@ -364,6 +346,20 @@ static void irq_cleanup(struct gf_dev *gf_dev)
     free_irq(gf_dev->irq, gf_dev);//need modify
 }
 
+static void gf_auto_send_touchdown()
+{
+	struct fp_underscreen_info tp_info;
+	tp_info.touch_state = 1;
+	gf_opticalfp_irq_handler(&tp_info);
+}
+
+static void gf_auto_send_touchup()
+{
+	struct fp_underscreen_info tp_info;
+	tp_info.touch_state = 0;
+	gf_opticalfp_irq_handler(&tp_info);
+}
+
 static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     struct gf_dev *gf_dev = &gf;
@@ -394,7 +390,7 @@ static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
     }
 
     if (gf_dev->device_available == 0) {
-        if ((cmd == GF_IOC_ENABLE_POWER) || (cmd == GF_IOC_DISABLE_POWER)) {
+        if ((cmd == GF_IOC_ENABLE_POWER) || (cmd == GF_IOC_DISABLE_POWER) || (cmd == GF_IOC_POWER_RESET)) {
             pr_info("power cmd\n");
         } else {
             pr_info("Sensor is power off currently. \n");
@@ -402,7 +398,7 @@ static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
         }
     }
 
-    switch (cmd) {
+	switch (cmd) {
         case GF_IOC_INIT:
             pr_debug("%s GF_IOC_INIT\n", __func__);
             if (copy_to_user((void __user *)arg, (void *)&netlink_route, sizeof(u8))) {
@@ -425,9 +421,13 @@ static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             pr_info("%s GF_IOC_RESET. \n", __func__);
             gf_hw_reset(gf_dev, 10);
             break;
+	case GF_IOC_POWER_RESET:
+		pr_info("%s GF_IOC_POWER_RESET. \n", __func__);
+		gf_power_reset(gf_dev);
+		gf_dev->device_available = 1;
+		break;
         case GF_IOC_INPUT_KEY_EVENT:
-            if (copy_from_user(&gf_key, (struct gf_key *)arg, sizeof(struct gf_key)))
-            {
+		if (copy_from_user(&gf_key, (struct gf_key *)arg, sizeof(struct gf_key))) {
                 pr_info("Failed to copy input key event from user to kernel\n");
                 retval = -EFAULT;
                 break;
@@ -502,6 +502,14 @@ static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             lasttouchmode = 0;
             pr_debug("%s GF_IOC_CLEAN_TOUCH_FLAG\n", __func__);
             break;
+	case GF_IOC_AUTO_SEND_TOUCHDOWN:
+		pr_info("%s GF_IOC_AUTO_SEND_TOUCHDOWN\n", __func__);
+		gf_auto_send_touchdown();
+		break;
+	case GF_IOC_AUTO_SEND_TOUCHUP:
+		pr_info("%s GF_IOC_AUTO_SEND_TOUCHUP\n", __func__);
+		gf_auto_send_touchup();
+		break;
         default:
             pr_warn("unsupport cmd:0x%x\n", cmd);
             break;

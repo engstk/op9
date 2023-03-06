@@ -68,12 +68,11 @@
  *****************************************************************************
  */
 
-void intelHexInterpreterInitialise(void);
+void intelHexInterpreterInitialise( void );
 
 /* hand in the line of intel hex record, returns any of the above
  * return codes (1 == reset of tof done) */
-char intelHexHandleRecord(void *, struct tof8801_BL_application *,
-			  int lineLength, const char *line, char verify);
+char intelHexHandleRecord ( void *, struct tof8801_BL_application *, int lineLength, const char * line, char verify );
 
 #endif /* INTEL_HEX_INTERPRETER_H */
 

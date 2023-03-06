@@ -1,17 +1,21 @@
 /**
  * Copyright 2008-2013 OPLUS Mobile Comm Corp., Ltd, All rights reserved.
+ * VENDOR_EDIT:
  * FileName:devinfo.c
  * ModuleName:devinfo
+ * Author: wangjc
  * Create Date: 2013-10-23
  * Description:add interface to get device information.
  * History:
    <version >  <time>  <author>  <desc>
+   1.0		2013-10-23	wangjc	init
+   2.0      2015-04-13  hantong modify as platform device  to support diffrent configure in dts
 */
 
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 #include <soc/oplus/device_info.h>
-#include <soc/oplus/system/oplus_project.h>
+#include <soc/oplus/oplus_project.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/fs.h>
@@ -254,11 +258,33 @@ EXPORT_SYMBOL(register_device_proc);
 
 static int parse_gpio_dts(struct device *dev, struct device_info *dev_info)
 {
+#ifdef CONFIG_MTK_PLATFORM
+	int i;
+	char tmp[INFO_LEN] = {0};
+	dev_info->p_ctrl = devm_pinctrl_get(dev);
+	for (i = 0; i < BOARD_GPIO_SUPPORT; i++) {
+		if (!IS_ERR_OR_NULL(dev_info->p_ctrl)) {
+			snprintf(tmp, INFO_LEN, "aboard_gpio%d_active", i);
+			dev_info->active[i] = pinctrl_lookup_state(dev_info->p_ctrl, tmp);
+			if (IS_ERR_OR_NULL(dev_info->active[i])) {
+				 dev_msg("Failed to get active[%d], check dts\n", i);
+				 continue;
+			}
+			snprintf(tmp, INFO_LEN, "aboard_gpio%d_sleep", i);
+			dev_info->sleep[i] = pinctrl_lookup_state(dev_info->p_ctrl, tmp);
+			if (IS_ERR_OR_NULL(dev_info->active[i])) {
+				 dev_msg("Failed to get sleep[%d], check dts\n", i);
+				 continue;
+			}
+		}
+	}
+#else
         dev_info->p_ctrl = devm_pinctrl_get(dev);
         if (!IS_ERR_OR_NULL(dev_info->p_ctrl)) {
 		dev_info->active[0] = pinctrl_lookup_state(dev_info->p_ctrl, "active");
 		dev_info->sleep[0] = pinctrl_lookup_state(dev_info->p_ctrl, "sleep");
 	}
+#endif
 	return 0;
 }
 
@@ -430,8 +456,9 @@ pmic_get_submask(struct device_node *np, struct device *dev)
 	}
 	iio_channel_release(ADC_channel);
 
+	dev_msg("adc raw_value %d\n", adc_value);
 	adc_value /= 1000;
-	dev_msg("adc value %d\n", adc_value);
+	dev_msg("adc value finally is %d\n", adc_value);
 
 	if (adc_value > 1750) {
 		ret = -100;
@@ -509,8 +536,8 @@ reinit_aboard_id(struct device *dev, struct manufacture_info *info)
 	struct device_node *np;
 	int32_t hw_mask = 0;
 	int i = 0, ret = 0;
-	int id_size = 0;
-	uint32_t *main_val = NULL, *sub_val = NULL, *rf_val = NULL;
+	int id_size = 0, ignore_size = 0;
+	uint32_t *main_val = NULL, *sub_val = NULL, *rf_val = NULL, *ignore_list = NULL;
 	struct device_info *dev_info = g_dev_info;
 	bool match = false;
 
@@ -527,6 +554,26 @@ reinit_aboard_id(struct device *dev, struct manufacture_info *info)
 		dev_msg("failed to find node\n");
 		return -ENODEV;
 	}
+
+/*#ifdef OPLUS_TP_FEATURE_BASIC*/
+	ignore_size = of_property_count_elems_of_size(np, "devinfo-match-ignore-list", sizeof(uint32_t));
+	if (ignore_size > 0) {
+		ignore_list = (uint32_t *)kzalloc(sizeof(uint32_t) * ignore_size, GFP_KERNEL);
+		if (!ignore_list) {
+			dev_msg("ignore_list alloc err\n");
+			return -ENOMEM;
+		}
+		of_property_read_u32_array(np, "devinfo-match-ignore-list", ignore_list, ignore_size);
+		for (i = 0; i < ignore_size; i++) {
+			if (*(ignore_list + i) == get_project()) {
+				dev_msg("found in ignore list %d going to return success\n", get_project());
+				ret = 0;
+				goto ignore_match_success;
+			}
+		}
+	}
+	dev_msg("not in ignore list, continue other match process %d\n", get_project());
+/*#endif OPLUS_TP_FEATURE_BASIC*/
 
 	id_size =
 		of_property_count_elems_of_size(np, "aboard-patterns",
@@ -622,6 +669,10 @@ read_failed:
 		kfree(rf_val);
 	}
 
+ignore_match_success:
+	kfree(ignore_list);
+	ignore_list = NULL;
+
 seccess:
 	if (!ret) {
 		info->manufacture = "rf-match";
@@ -684,8 +735,10 @@ devinfo_probe(struct platform_device *pdev)
 	set_gpios_active(dev_info);
 	init_other_hw_ids(pdev);
 	set_gpios_sleep(dev_info);
+#ifndef CONFIG_MTK_PLATFORM
 	/*register oplus special node*/
 	init_ddr_type(dev_info);
+#endif
 
 	return 0;
 }
@@ -731,4 +784,4 @@ device_initcall(device_info_init);
 
 MODULE_DESCRIPTION("OPLUS device info");
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Klus <Klus@oplus.com>");
+MODULE_AUTHOR("Klus");

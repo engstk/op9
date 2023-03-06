@@ -26,14 +26,14 @@
 //#define		EEPROM_FULL_ERASE		// E2Prom full erase
 
 #define	SELECT_MODEL		3	// --- select model ---//
-								// 0 : Oplus L
-								// 1 : Oplus L+
-								// 2 : Oplus W
+								// 0 : OnePlus L
+								// 1 : OnePlus L+
+								// 2 : OnePlus W
 
 #define	SELECT_VENDOR		0x01	// --- select vender ---//
 									// 0bit : SEMCO
 									// 1bit : OFILM
-									// 7bit : Oplus
+									// 7bit : OnePlus
 
 #define	MASTER_SLAVE		0	// --- select spi i/f mode ---//
 								// 0 : only master

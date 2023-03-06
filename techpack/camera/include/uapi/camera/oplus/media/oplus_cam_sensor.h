@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
+/*add dpc read for imx471*/
 #define FD_DFCT_MAX_NUM 5
 #define SG_DFCT_MAX_NUM 299
 #define FD_DFCT_NUM_ADDR 0x7678
@@ -20,7 +21,7 @@ struct sony_dfct_tbl_t {
 	/*---- FD static defect ----*/
 	int fd_dfct_num;                         /* the number of FD static defect*/
 	int fd_dfct_addr[FD_DFCT_MAX_NUM];       /* [ u25 ( upper-u13 = x-addr, lower-u12 = y-addr ) ]*/
-} __attribute__((packed));
+} __attribute__ ((packed));
 
 #define CALIB_DATA_LENGTH         1689
 #define WRITE_DATA_MAX_LENGTH     16
@@ -28,20 +29,20 @@ struct sony_dfct_tbl_t {
 #define EEPROM_NAME_LENGTH        64
 
 struct cam_write_eeprom_t {
-	unsigned int    cam_id;
-	unsigned int    baseAddr;
-	unsigned int    calibDataSize;
-	unsigned int    isWRP;
-	unsigned int    WRPaddr;
-	unsigned char calibData[CALIB_DATA_LENGTH];
-	char eepromName[EEPROM_NAME_LENGTH];
-} __attribute__((packed));
+    unsigned int    cam_id;
+    unsigned int    baseAddr;
+    unsigned int    calibDataSize;
+    unsigned int    isWRP;
+    unsigned int    WRPaddr;
+    unsigned char calibData[CALIB_DATA_LENGTH];
+    char eepromName[EEPROM_NAME_LENGTH];
+} __attribute__ ((packed));
 
 #define EEPROM_CHECK_DATA_MAX_SIZE 196
-struct check_eeprom_data_t {
-	unsigned int    cam_id;
-	unsigned int    checkDataSize;
-	unsigned int    startAddr;
-	unsigned int    eepromData_checksum;
-} __attribute__((packed));
+struct check_eeprom_data_t{
+    unsigned int    cam_id;
+    unsigned int    checkDataSize;
+    unsigned int    startAddr;
+    unsigned int    eepromData_checksum;
+} __attribute__ ((packed));
 

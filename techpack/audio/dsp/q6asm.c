@@ -845,9 +845,6 @@ static int q6asm_unmap_cal_memory(int32_t cal_type,
 
 	common_client.port[IN].buf->phys = cal_block->cal_data.paddr;
 
-	#ifdef OPLUS_BUG_STABILITY
-	common_client.port[IN].buf->phys = cal_block->cal_data.paddr;
-	#endif /*OPLUS_BUG_STABILITY*/
 	result2 = q6asm_memory_unmap_regions(&common_client, IN);
 	if (result2 < 0) {
 		pr_err("%s: unmap failed, err %d\n",
@@ -1092,7 +1089,7 @@ int q6asm_map_rtac_block(struct rtac_cal_block_data *cal_block)
 		goto done;
 	}
 
-	/* Use first asm buf to map memory */
+	/* Use second asm buf to map memory */
 	if (common_client.port[OUT].buf == NULL) {
 		pr_err("%s: common buf is NULL\n",
 			__func__);

@@ -4,7 +4,6 @@
 ** Description : oplus aod feature
 ** Version : 1.0
 ** Date : 2020/09/24
-** Author : liping-m@MM.Display.LCD Driver
 **
 ** ------------------------------- Revision History: -----------
 **  <author>        <data>        <version >        <desc>

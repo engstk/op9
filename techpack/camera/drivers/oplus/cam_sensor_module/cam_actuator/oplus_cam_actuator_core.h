@@ -20,6 +20,7 @@ int32_t oplus_cam_actuator_power_up(struct cam_actuator_ctrl_t *a_ctrl);
 int32_t cam_actuator_check_firmware(struct cam_actuator_ctrl_t *a_ctrl);
 int32_t cam_actuator_update_pid_to_v11(struct cam_actuator_ctrl_t *a_ctrl);
 int RamWriteByte(struct cam_actuator_ctrl_t *a_ctrl,
-		 uint32_t addr, uint32_t data, unsigned short mdelay);
+uint32_t addr, uint32_t data, unsigned short mdelay);
+int32_t oplus_cam_actuator_construct_default_power_setting(struct cam_sensor_power_ctrl_t *power_info);
 
 #endif /* _CAM_ACTUATOR_CORE_H_ */

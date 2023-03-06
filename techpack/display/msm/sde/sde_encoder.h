@@ -192,10 +192,6 @@ struct sde_encoder_ops {
  * @pm_qos_cpu_req:		qos request for all cpu core frequency
  * @valid_cpu_mask:		actual voted cpu core mask
  * @mode_info:                  stores the current mode and should be used
- * @delay_kickoff      boolean to delay the kickoff, used in case
- *             of esd attack to ensure esd workqueue detects
- *             the previous frame transfer completion before
- *             next update is triggered.
  *				only in commit phase
  * @delay_kickoff		boolean to delay the kickoff, used in case
  *				of esd attack to ensure esd workqueue detects

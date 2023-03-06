@@ -573,6 +573,18 @@ struct sde_connector {
 	struct edid *cached_edid;
 };
 
+#ifdef OPLUS_BUG_STABILITY
+struct dc_apollo_pcc_sync {
+	wait_queue_head_t bk_wait;
+	int dc_pcc_updated;
+	__u32 pcc;
+	__u32 pcc_last;
+	__u32 pcc_current;
+	struct mutex lock;
+	int backlight_pending;
+};
+#endif
+
 /**
  * to_sde_connector - convert drm_connector pointer to sde connector pointer
  * @X: Pointer to drm_connector structure
@@ -1131,12 +1143,6 @@ int sde_connector_get_panel_vfp(struct drm_connector *connector,
  * @connector: Pointer to DRM connector object
  */
 int sde_connector_esd_status(struct drm_connector *connector);
-
-/**
- * sde_connector_helper_post_kickoff - helper function for drm connector post kickoff
- * @connector: Pointer to DRM connector object
- */
-void sde_connector_helper_post_kickoff(struct drm_connector *connector);
 
 #ifdef OPLUS_BUG_STABILITY
 int _sde_connector_update_bl_scale_(struct sde_connector *c_conn);

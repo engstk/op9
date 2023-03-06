@@ -47,6 +47,7 @@
 #include "../../../block/blk.h"
 
 #define UFSTW_VER					0x0110
+#define UFSTW_MICRON_VER				0x0000
 #define UFSTW_DD_VER					0x010300
 #define UFSTW_DD_VER_POST				""
 

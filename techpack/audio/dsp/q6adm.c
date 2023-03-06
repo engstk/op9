@@ -263,6 +263,10 @@ int adm_set_auddet_enable_param(int port_id, uint8_t val)
 
 	pr_info("%s, portid %d, enable %d\n", __func__, port_id, val);
 
+	if (port_idx < 0) {
+		return rc;
+	}
+
 	memset(&param_hdr, 0, sizeof(param_hdr));
 	param_hdr.module_id = MUTE_DETECT_MODULE_ID;
 	param_hdr.instance_id = INSTANCE_ID_0;
@@ -3342,6 +3346,10 @@ static int adm_copp_set_ec_ref_mfc_cfg(int port_id, int copp_idx,
  * Returns 0 on success or error on failure
  */
 
+#ifdef OPLUS_FEATURE_KTV
+#define AUDIO_TOPOLOGY_KTV    0x10001080
+#endif /* OPLUS_FEATURE_KTV */
+
 int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 	     int perf_mode, uint16_t bit_width, int app_type, int acdb_id,
 	     int session_type, uint32_t passthr_mode, uint32_t copp_token)
@@ -3484,6 +3492,15 @@ int adm_open_v2(int port_id, int path, int rate, int channel_mode, int topology,
 		pr_debug("%s: ffecns port id =%x\n", __func__,
 				this_adm.ffecns_port_id);
 	}
+
+	#ifdef OPLUS_FEATURE_KTV
+	if ((topology == AUDIO_TOPOLOGY_KTV)
+			&& (rate != ADM_CMD_COPP_OPEN_SAMPLE_RATE_48K)) {
+			pr_info("%s: Change rate %d to 48K for copp 0x%x",
+					__func__, rate, topology);
+			rate = 48000;
+	}
+	#endif /* OPLUS_FEATURE_KTV */
 
 	if (topology == VPM_TX_VOICE_SMECNS_V2_COPP_TOPOLOGY ||
 	    topology == VPM_TX_VOICE_FLUENCE_SM_COPP_TOPOLOGY ||
@@ -4953,6 +4970,53 @@ int adm_set_volume(int port_id, int copp_idx, int volume)
 	return rc;
 }
 EXPORT_SYMBOL(adm_set_volume);
+
+#ifdef OPLUS_FEATURE_KTV
+int adm_set_reverb_param(int port_id, int copp_idx, int32_t* params)
+{
+	struct audproc_revert_param audproc_param;
+	struct param_hdr_v3 param_hdr;
+	int rc  = 0;
+
+	pr_debug("%s, portid %d, copp idx %d\n", __func__, port_id, copp_idx);
+
+	memset(&audproc_param, 0, sizeof(audproc_param));
+	memset(&param_hdr, 0, sizeof(param_hdr));
+	param_hdr.module_id = 0x10001081;
+	param_hdr.instance_id = 0x8000;
+	param_hdr.param_id = 0x10001082;
+	param_hdr.param_size = sizeof(audproc_param);
+
+	audproc_param.mode = params[0];
+	audproc_param.volume = params[1];
+	audproc_param.peg = params[2];
+	audproc_param.pitchange = params[3];
+	audproc_param.reverbparam= params[4];
+	audproc_param.enabled= params[5];
+	audproc_param.reverved0 = params[6];
+	audproc_param.reverved1 = params[7];
+	audproc_param.reverved2 = params[8];
+	audproc_param.reverved3 = params[9];
+	audproc_param.reverved4 = params[10];
+	audproc_param.reverved5 = params[11];
+	audproc_param.reverved6 = params[12];
+	audproc_param.reverved7 = params[13];
+	audproc_param.reverved8 = params[14];
+	audproc_param.reverved9 = params[15];
+	audproc_param.reverved10 = params[16];
+	audproc_param.reverved11 = params[17];
+	audproc_param.reverved12 = params[18];
+	audproc_param.reverved13 = params[19];
+
+	rc = adm_pack_and_set_one_pp_param(port_id, copp_idx, param_hdr,
+					   (uint8_t *) &audproc_param);
+	if (rc)
+		pr_err("%s: Failed to set volume, err %d\n", __func__, rc);
+
+	return rc;
+}
+EXPORT_SYMBOL(adm_set_reverb_param);
+#endif /* OPLUS_FEATURE_KTV */
 
 /**
  * adm_set_softvolume -

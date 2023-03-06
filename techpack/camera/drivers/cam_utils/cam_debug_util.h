@@ -43,6 +43,7 @@
 #define CAM_OPE        (1 << 28)
 #define CAM_IO_ACCESS  (1 << 29)
 #define CAM_SFE        (1 << 30)
+
 #ifdef OPLUS_FEATURE_CAMERA_COMMON
 #define CAM_TOF        (1 << 31)
 #endif

@@ -37,6 +37,7 @@
 		platform_support_project = <19825>;
 		platform_support_project_dir = <19825>;
 		platform_support_project_commandline = "qcom,mdss_dsi_samsung_amb655x_dsc_cmd";
+		panel = <&dsi_samsung_amb655x_dsc_cmd>;
 
 		/* SW Support Feature Control */
 		//ear_sense_support;
@@ -87,6 +88,7 @@
 };
 //#endif /* OPLUS_BUG_STABILITY */
 //#ifdef OPLUS_CHG_BASIC
+//yangfangiao@bsp,for S1C drop issue
 &wlan {
 	qcom,vdd-wlan-rfa1-config = <1880000 2000000 0 0 1>;
 };
@@ -260,6 +262,9 @@
 		};
 	};
 	//#endif /*OPLUS_FEATURE_SENSOR_SMEM*/
+	midas_pdev {
+                compatible = "oplus,midas-pdev";
+        };
 };
 //#ifdef OPLUS_FEATURE_RF_CABLE_DETECT
 &tlmm {

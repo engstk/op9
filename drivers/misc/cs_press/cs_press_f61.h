@@ -5,13 +5,13 @@
  *
  * Description  : driver for chip sea IC
  * History      : ( ID, Date, Author, Description)
- * Author       : Cong.Dai @psw.bsp.tp
  * Data         : 2018/11/03
  ************************************************************/
 
 #ifndef _CS_PRESS_H
 #define _CS_PRESS_H
 
+//#include <soc/oplus/device_info.h>
 
 #define I2C_CHECK_SCHEDULE
 /*IIC REG*/

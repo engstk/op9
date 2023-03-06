@@ -8,7 +8,6 @@
  **
  ** Version: 1.0
  ** Date created: 15:03:11,23/05/2018
- ** Author: Ran.Chen@Prd.BaseDrv
  **
  ** --------------------------- Revision History: --------------------------------
  **  <author>         <data>         <desc>
@@ -51,7 +50,7 @@
 
 #include <linux/module.h>
 #include <linux/proc_fs.h>
-#include <soc/oplus/system/oplus_project.h>
+#include <soc/oplus/oplus_project.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/fs.h>
@@ -104,6 +103,9 @@ static int fp_gpio_parse_parent_dts(struct fp_data *fp_data)
     int fp_id_index = 0;
     struct device *dev = NULL;
     struct device_node *np = NULL;
+	struct pinctrl *fp_id_pinctrl = NULL;
+	struct pinctrl_state *fp_id_pull_id0 = NULL;
+	int one_for_three = 0;
 
     if (!fp_data || !fp_data->dev) {
         ret = -FP_ERROR_GENERAL;
@@ -127,6 +129,27 @@ static int fp_gpio_parse_parent_dts(struct fp_data *fp_data)
 
     dev_info(fp_data->dev, "fp_id_amount: %d\n", fp_data->fp_id_amount);
 
+	ret = of_property_read_u32(np, "oplus,one_gpio_for_three_ic", &one_for_three);
+	if (ret) {
+        dev_err(fp_data->dev, "oplus,one_gpio_for_three_ic is not define\n");
+        ret = FP_OK;
+	}
+	if (one_for_three == 1) {
+	    fp_id_pinctrl = devm_pinctrl_get(fp_data->dev);
+	    if (IS_ERR_OR_NULL(fp_id_pinctrl)) {
+	        dev_err(fp_data->dev, "falied to get pinctr handle\n");
+	        return -FP_ERROR_GENERAL;
+	    }
+
+	    fp_id_pull_id0 = pinctrl_lookup_state(fp_id_pinctrl, "gpio_id0_default");
+	    if (IS_ERR_OR_NULL(fp_id_pull_id0)) {
+	        dev_err(fp_data->dev, "falied to find pinctrl fp_id_pull_id1!\n");
+	        goto exit;
+	    }
+
+	    pinctrl_select_state(fp_id_pinctrl, fp_id_pull_id0);
+	    dev_err(fp_data->dev, "success to select id0!\n");
+	}
     for (fp_id_index = 0; fp_id_index < fp_data->fp_id_amount; fp_id_index++) {
         char fp_gpio_current_node[FP_ID_MAX_LENGTH] = {0};
         snprintf(fp_gpio_current_node, FP_ID_MAX_LENGTH - 1, "%s%d", FP_GPIO_PREFIX_NODE, fp_id_index);

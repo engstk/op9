@@ -2642,6 +2642,7 @@ int iris_enable(struct dsi_panel *panel, struct dsi_panel_cmd_set *on_cmds)
 			IRIS_LOGI("reset iris_osd_autorefresh");
 			iris_osd_autorefresh(0);
 		}
+		IRIS_LOGI("panel name[%s] in %s() need return",  panel->name,__func__);
 		return rc;
 	}
 

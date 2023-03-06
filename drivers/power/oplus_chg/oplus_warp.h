@@ -26,12 +26,12 @@
 #include "oplus_op_def.h"
 #endif
 
-#define OPLUS_WARP_MCU_HWID_UNKNOW -1
-#define OPLUS_WARP_MCU_HWID_STM8S 0
-#define OPLUS_WARP_MCU_HWID_N76E 1
-#define OPLUS_WARP_ASIC_HWID_RK826 2
-#define OPLUS_WARP_ASIC_HWID_OP10 3
-#define OPLUS_WARP_ASIC_HWID_RT5125 4
+#define OPLUS_WARP_MCU_HWID_UNKNOW   -1
+#define OPLUS_WARP_MCU_HWID_STM8S	0
+#define OPLUS_WARP_MCU_HWID_N76E		1
+#define OPLUS_WARP_ASIC_HWID_RK826	2
+#define OPLUS_WARP_ASIC_HWID_OP10	3
+#define OPLUS_WARP_ASIC_HWID_RT5125   4
 #define OPLUS_WARP_ASIC_HWID_NON_EXIST 5
 
 enum {
@@ -61,7 +61,7 @@ enum {
 	PORTABLE_20W_3 = 0x36,
 };
 
-enum e_fastchg_power {
+enum e_fastchg_power{
 	FASTCHG_POWER_UNKOWN,
 	FASTCHG_POWER_5V4A_5V6A_WARP,
 	FASTCHG_POWER_11V3A_FLASHCHARGER,
@@ -92,12 +92,13 @@ enum {
 
 enum {
 	FASTCHG_TEMP_RANGE_INIT = 0,
-	FASTCHG_TEMP_RANGE_LITTLE_COLD, /*0 ~ 5*/
-	FASTCHG_TEMP_RANGE_COOL, /*5 ~ 12*/
+	FASTCHG_TEMP_RANGE_LITTLE_COLD,/*0 ~ 5*/
+	FASTCHG_TEMP_RANGE_COOL,/*5 ~ 12*/
 	FASTCHG_TEMP_RANGE_LITTLE_COOL, /*12 `16*/
 	FASTCHG_TEMP_RANGE_NORMAL_LOW, /*16-25*/
 	FASTCHG_TEMP_RANGE_NORMAL_HIGH, /*25-43*/
 };
+
 
 struct warp_gpio_control {
 	int switch1_gpio;
@@ -141,8 +142,8 @@ struct oplus_chg_asic {
 	void *data;
 	struct oplus_warp_operations *vops;
 	struct list_head list;
-	bool (*is_used)(struct i2c_client *);
-	int (*init_proc_warp_fw_check)(void);
+	bool (* is_used)(struct i2c_client *);
+	int (* init_proc_warp_fw_check)(void);
 #ifdef CONFIG_OPLUS_CHG_OOS
 	void (*register_warp_devinfo)(struct oplus_warp_chip *chip);
 #else
@@ -223,7 +224,7 @@ struct oplus_warp_chip {
 	int adapter_update_report;
 	int dpdm_switch_mode;
 	bool support_warp_by_normal_charger_path;
-	/* Add for warp batt 4.40*/
+/* Add for warp batt 4.40*/
 	bool batt_type_4400mv;
 	bool warp_fw_check;
 	int warp_fw_type;
@@ -255,8 +256,8 @@ struct oplus_warp_chip {
 	int warp_warm_bat_suspend_volt;
 	int warp_chg_current_now;
 	int fast_chg_type;
-	bool disable_adapter_output;
-	int set_warp_current_limit;
+	bool disable_adapter_output;// 0--warp adapter output normal,  1--disable warp adapter output
+	int set_warp_current_limit;///0--no limit;  1--max current limit 2A
 	bool warp_multistep_adjust_current_support;
 	int warp_reply_mcu_bits;
 	int warp_multistep_initial_batt_temp;
@@ -302,9 +303,9 @@ struct oplus_warp_chip {
 #endif
 };
 
-#define MAX_FW_NAME_LENGTH 60
+#define MAX_FW_NAME_LENGTH	60
 #define MAX_DEVICE_VERSION_LENGTH 16
-#define MAX_DEVICE_MANU_LENGTH 60
+#define MAX_DEVICE_MANU_LENGTH    60
 struct oplus_warp_operations {
 	int (*fw_update)(struct oplus_warp_chip *chip);
 	int (*fw_check_then_recover)(struct oplus_warp_chip *chip);
@@ -318,10 +319,9 @@ struct oplus_warp_operations {
 	void (*set_switch_mode)(struct oplus_warp_chip *chip, int mode);
 	int (*get_gpio_ap_data)(struct oplus_warp_chip *chip);
 	int (*read_ap_data)(struct oplus_warp_chip *chip);
-	void (*reply_mcu_data)(struct oplus_warp_chip *chip, int ret_info,
-			       int device_type);
-	void (*reply_mcu_data_4bits)(struct oplus_warp_chip *chip, int ret_info,
-				     int device_type);
+	void (*reply_mcu_data)(struct oplus_warp_chip *chip, int ret_info, int device_type);
+	void (*reply_mcu_data_4bits)(struct oplus_warp_chip *chip,
+		int ret_info, int device_type);
 	void (*reset_fastchg_after_usbout)(struct oplus_warp_chip *chip);
 #ifndef OPLUS_CHG_OP_DEF
 	void (*switch_fast_chg)(struct oplus_warp_chip *chip);
@@ -330,8 +330,7 @@ struct oplus_warp_operations {
 #endif
 	void (*reset_mcu)(struct oplus_warp_chip *chip);
 	void (*set_mcu_sleep)(struct oplus_warp_chip *chip);
-	void (*set_warp_chargerid_switch_val)(struct oplus_warp_chip *chip,
-					      int value);
+	void (*set_warp_chargerid_switch_val)(struct oplus_warp_chip *chip, int value);
 	bool (*is_power_off_charging)(struct oplus_warp_chip *chip);
 	int (*get_reset_gpio_val)(struct oplus_warp_chip *chip);
 	int (*get_switch_gpio_val)(struct oplus_warp_chip *chip);
@@ -342,8 +341,7 @@ struct oplus_warp_operations {
 	void (*update_temperature_soc)(void);
 	int (*check_asic_fw_status)(struct oplus_warp_chip *chip);
 #ifdef OPLUS_CHG_DEBUG
-	int (*user_fw_upgrade)(struct oplus_warp_chip *chip, u8 *fw_buf,
-			       u32 fw_size);
+	int (*user_fw_upgrade)(struct oplus_warp_chip *chip, u8 *fw_buf, u32 fw_size);
 #endif
 };
 

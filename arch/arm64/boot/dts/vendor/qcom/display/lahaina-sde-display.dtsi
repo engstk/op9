@@ -25,11 +25,17 @@
 		regulator-min-microvolt = <5500000>;
 		regulator-max-microvolt = <5500000>;
 		regulator-enable-ramp-delay = <233>;
+		//#ifdef VENDOR_EDIT
+		//gpio = <&tlmm 12 0>;
+		//#endif
 		enable-active-high;
 		regulator-boot-on;
 		proxy-supply = <&display_panel_avdd>;
 		qcom,proxy-consumer-enable;
 		pinctrl-names = "default";
+		//#ifdef VENDOR_EDIT
+		//pinctrl-0 = <&display_panel_avdd_default>;
+		//#endif
 	};
 
 	sde_wb: qcom,wb-display@0 {
@@ -94,8 +100,10 @@
 	pinctrl-0 = <&sde_dsi_active &sde_te_active>;
 	pinctrl-1 = <&sde_dsi_suspend &sde_te_suspend>;
 
+	// #ifdef VENDOR_EDIT
 	pinctrl-2 = <&sde_te1_active>;
 	pinctrl-3 = <&sde_te1_suspend>;
+	// #endif
 
 	qcom,platform-te-gpio = <&tlmm 82 0>;
 	qcom,panel-te-source = <0>;
@@ -103,6 +111,10 @@
 	vddio-supply = <&L12C>;
 	vdd-supply = <&L13C>;
 	avdd-supply = <&display_panel_avdd>;
+	//#ifdef VENDOR_EDIT
+	//lab-supply = <&ab_vreg>;
+	//ibb-supply = <&ibb_vreg>;
+	//#endif
 };
 
 &sde_dsi1 {

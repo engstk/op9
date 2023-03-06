@@ -8,7 +8,6 @@
  **
  ** Version: 1.0
  ** Date created: 19:23:15,13/03/2018
- ** Author: oujinrong@Prd.BaseDrv
  ** TAG: BSP.Fingerprint.Basic
  ** --------------------------- Revision History: --------------------------------
  **    <author>      <data>           <desc>

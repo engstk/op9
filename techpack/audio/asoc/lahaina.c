@@ -42,6 +42,14 @@
 #include "lahaina-port-config.h"
 #include "msm_dailink.h"
 
+#ifdef OPLUS_FEATURE_AUDIO_FTM
+#include "dailink_extends.h"
+#endif /* OPLUS_FEATURE_AUDIO_FTM */
+
+#ifdef OPLUS_ARCH_EXTENDS
+#include "codecs/sia81xx/sia81xx_aux_dev_if.h"
+#endif /* OPLUS_ARCH_EXTENDS */
+
 #define DRV_NAME "lahaina-asoc-snd"
 #define __CHIPSET__ "LAHAINA "
 #define MSM_DAILINK_NAME(name) (__CHIPSET__#name)
@@ -1077,7 +1085,11 @@ static struct wcd_mbhc_config wcd_mbhc_cfg = {
 };
 
 /* set audio task affinity to core 1 & 2 */
+#ifndef OPLUS_ARCH_EXTENDS
 static const unsigned int audio_core_list[] = {1, 2};
+#else
+static const unsigned int audio_core_list[] = {0, 1, 2, 3};
+#endif /* OPLUS_ARCH_EXTENDS */
 static cpumask_t audio_cpu_map = CPU_MASK_NONE;
 static struct dev_pm_qos_request *msm_audio_req;
 static unsigned int qos_client_active_cnt;
@@ -6360,6 +6372,9 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.name = "TX3_CDC_DMA Hostless",
 		.stream_name = "TX3_CDC_DMA Hostless",
 		.dynamic = 1,
+		#ifdef OPLUS_FEATURE_AUDIO_FTM
+		.dpcm_playback = 1,
+		#endif /* OPLUS_FEATURE_AUDIO_FTM */
 		.dpcm_capture = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			    SND_SOC_DPCM_TRIGGER_POST},
@@ -6560,6 +6575,24 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.ignore_pmdown_time = 1,
 		SND_SOC_DAILINK_REG(display_port_hostless),
 	},
+	#ifdef OPLUS_FEATURE_AUDIO_FTM
+	TX_CDC_DMA_HOSTLESS_DAILINK("TX4_CDC_DMA Hostless", "TX4_CDC_DMA Hostless", tx4_cdcdma_hostless),
+	#endif /* OPLUS_FEATURE_AUDIO_FTM */
+
+	#ifdef OPLUS_ARCH_EXTENDS
+	{/* hw:x,47 */
+		.name = "Quinary MI2S TX_Hostless",
+		.stream_name = "Quinary MI2S_TX Hostless Capture",
+		.dynamic = 1,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+				SND_SOC_DPCM_TRIGGER_POST},
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(quin_mi2s_tx_hostless),
+	},
+	#endif /* OPLUS_ARCH_EXTENDS */
 };
 
 static struct snd_soc_dai_link msm_common_be_dai_links[] = {
@@ -7421,11 +7454,40 @@ static struct snd_soc_dai_link msm_afe_rxtx_lb_be_dai_link[] = {
 #ifdef OPLUS_ARCH_EXTENDS
 SND_SOC_DAILINK_DEFS(tfa98xx_tert_mi2s_rx,
 	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-mi2s.4")),
-	DAILINK_COMP_ARRAY(COMP_CODEC("tfa98xx.7-0035", "tfa98xx-aif-7-35"),
-			COMP_CODEC("tfa98xx.7-0034", "tfa98xx-aif-7-34"),),
+	DAILINK_COMP_ARRAY(COMP_CODEC("tfa98xx.4-0035", "tfa98xx-aif-4-35"),
+			COMP_CODEC("tfa98xx.4-0034", "tfa98xx-aif-4-34"),),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
 
-static struct snd_soc_dai_link tfa98xx_stereo_be_dai_links[] = {
+SND_SOC_DAILINK_DEFS(tfa98xx_quin_mi2s_rx,
+	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-mi2s.4")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("tfa98xx.0-0034", "tfa98xx-aif-0-34"),),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
+
+static struct snd_soc_dai_link tfa98xx_mi2s_be_dai_links[] = {
+	{
+		.name = LPASS_BE_PRI_MI2S_RX,
+		.stream_name = "Primary MI2S Playback",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_PRI_MI2S_RX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_mi2s_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(pri_mi2s_rx),
+	},
+	{
+		.name = LPASS_BE_SEC_MI2S_RX,
+		.stream_name = "Secondary MI2S Playback",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_SECONDARY_MI2S_RX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_mi2s_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(sec_mi2s_rx),
+	},
 	{
 		.name = LPASS_BE_TERT_MI2S_RX,
 		.stream_name = "Tertiary MI2S Playback",
@@ -7439,7 +7501,95 @@ static struct snd_soc_dai_link tfa98xx_stereo_be_dai_links[] = {
 		SND_SOC_DAILINK_REG(tfa98xx_tert_mi2s_rx),
 		.num_codecs = ARRAY_SIZE(tfa98xx_tert_mi2s_rx_codecs),
 	},
+	{
+		.name = LPASS_BE_QUAT_MI2S_RX,
+		.stream_name = "Quaternary MI2S Playback",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_QUATERNARY_MI2S_RX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_mi2s_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(quat_mi2s_rx),
+	},
+	{
+		.name = LPASS_BE_QUIN_MI2S_RX,
+		.stream_name = "Quinary MI2S Playback",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_QUINARY_MI2S_RX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_mi2s_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(tfa98xx_quin_mi2s_rx),
+	},
+	{
+		.name = LPASS_BE_SENARY_MI2S_RX,
+		.stream_name = "Senary MI2S Playback",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_SENARY_MI2S_RX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_mi2s_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(sen_mi2s_rx),
+	},
 };
+
+void exchange_mi2s_dai_config(const char *product_name, int mi2s_id)
+{
+	int i = 0;
+	struct snd_soc_dai_link *temp_link;
+	int target_mi2s_id = MSM_BACKEND_DAI_TERTIARY_MI2S_RX;
+
+	switch (mi2s_id) {
+		case 0:
+			target_mi2s_id = MSM_BACKEND_DAI_PRI_MI2S_RX;
+			break;
+
+		case 1:
+			target_mi2s_id = MSM_BACKEND_DAI_SECONDARY_MI2S_RX;
+			break;
+
+		case 2:
+			target_mi2s_id = MSM_BACKEND_DAI_TERTIARY_MI2S_RX;
+			break;
+
+		case 3:
+			target_mi2s_id = MSM_BACKEND_DAI_QUATERNARY_MI2S_RX;
+			break;
+
+		case 4:
+			target_mi2s_id = MSM_BACKEND_DAI_QUINARY_MI2S_RX;
+			break;
+
+		case 5:
+			target_mi2s_id = MSM_BACKEND_DAI_SENARY_MI2S_RX;
+			break;
+
+		default:
+			target_mi2s_id = MSM_BACKEND_DAI_TERTIARY_MI2S_RX;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(msm_mi2s_be_dai_links); i++) {
+		temp_link = &msm_mi2s_be_dai_links[i];
+		if (temp_link->id == target_mi2s_id) {
+			#ifdef CONFIG_SND_SOC_TFA98XX
+			if (!strcmp(product_name, "nxp")) {
+				pr_info("%s: use nxp stereo dailink replace\n", __func__);
+				memcpy(temp_link, &tfa98xx_mi2s_be_dai_links[mi2s_id],
+						sizeof(tfa98xx_mi2s_be_dai_links[mi2s_id]));
+			}
+			#endif
+		}
+	}
+
+	return;
+}
+
 #endif /* OPLUS_ARCH_EXTENDS */
 
 static struct snd_soc_dai_link msm_lahaina_dai_links[
@@ -7770,10 +7920,10 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	u32 wcn_btfm_intf = 0;
 	const struct of_device_id *match;
 #ifdef OPLUS_ARCH_EXTENDS
-	int i;
 	const char *product_name = NULL;
 	const char *oplus_speaker_type = "oplus,speaker-pa";
-	struct snd_soc_dai_link *temp_link;
+	u32 extend_mi2s_id = 0;
+	const char *oplus_mi2s_id = "oplus,mi2s-id";
 #endif /* OPLUS_ARCH_EXTENDS */
 	u32 wsa_max_devs = 0;
 
@@ -7853,18 +8003,14 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 				if (!of_property_read_string(dev->of_node, oplus_speaker_type,
 						&product_name)) {
 					pr_err("%s: custom speaker product %s\n", __func__, product_name);
-					for (i = 0; i < ARRAY_SIZE(msm_mi2s_be_dai_links); i++) {
-						temp_link = &msm_mi2s_be_dai_links[i];
-						if (temp_link->id == MSM_BACKEND_DAI_TERTIARY_MI2S_RX) {
-							#ifdef CONFIG_SND_SOC_TFA98XX
-							if (!strcmp(product_name, "nxp")) {
-								pr_info("%s: use nxp stereo dailink replace\n", __func__);
-								memcpy(temp_link, &tfa98xx_stereo_be_dai_links[0],
-										sizeof(tfa98xx_stereo_be_dai_links[0]));
-							}
-							#endif
-						}
+					if (!of_property_read_u32(dev->of_node, oplus_mi2s_id,
+						&extend_mi2s_id)) {
+						pr_info("%s: custom extend mi2s id %d\n", __func__, extend_mi2s_id);
+					} else {
+						pr_info("%s: No DT match extend mi2s id, use default tert mi2s\n", __func__);
+						extend_mi2s_id = 2;
 					}
+					exchange_mi2s_dai_config(product_name, extend_mi2s_id);
 				}
 #endif /* OPLUS_ARCH_EXTENDS */
 				memcpy(msm_lahaina_dai_links + total_links,
@@ -8433,6 +8579,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	int ret = 0;
 	uint index = 0;
 	struct clk *lpass_audio_hw_vote = NULL;
+	#ifdef OPLUS_ARCH_EXTENDS
+	const char *pa_name = NULL;
+	const char *oplus_speaker_type = "oplus,speaker-pa";
+	#endif /* OPLUS_ARCH_EXTENDS */
 
 	if (!pdev->dev.of_node) {
 		dev_err(&pdev->dev, "%s: No platform supplied from device tree\n", __func__);
@@ -8492,6 +8642,20 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
                          __func__, pdev->dev.of_node->full_name, ret);
                 pdata->wsa_max_devs = 0;
         }
+
+	#ifdef OPLUS_ARCH_EXTENDS
+	ret = of_property_read_string(pdev->dev.of_node, oplus_speaker_type,
+									&pa_name);
+	if (!ret && !strcmp(pa_name, "sia81xx")) {
+		ret = soc_aux_init_only_sia81xx(pdev, card);
+		if (ret) {
+			pr_err("%s soc_aux_init_only_sia81xx return error.\n", __func__);
+			goto err;
+		}
+	} else {
+		pr_err("%s not use aux sia81xx smartPA.\n", __func__);
+	}
+	#endif /* OPLUS_ARCH_EXTENDS */
 
 	ret = devm_snd_soc_register_card(&pdev->dev, card);
 	if (ret == -EPROBE_DEFER) {
@@ -8638,6 +8802,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 
 	/* Add QoS request for audio tasks */
 	msm_audio_add_qos_request();
+
+	#ifdef OPLUS_BUG_DEBUG
+	pr_warning("%s, %d, Successfully!\n", __func__, __LINE__);
+	#endif /* OPLUS_BUG_DEBUG */
 
 	return 0;
 err:

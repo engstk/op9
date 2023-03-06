@@ -53,7 +53,7 @@
   tp_dsi_display_secondary
   tp_judge_ic_match_commandline
   kevent_send_to_user
-#endif
+#endif /*VENDOR_EDIT*/
 
 #ifdef OPLUS_FEATURE_OPROJECT
   get_project
@@ -82,6 +82,7 @@
   drm_crtc_vblank_count
 #endif /*OPLUS_BUG_STABILITY*/
 
+#ifdef VENDOR_EDIT
   commit_creds
   prepare_creds
   power_supply_unregister
@@ -92,6 +93,7 @@
   i2c_smbus_write_i2c_block_data
   i2c_smbus_write_word_data
   i2c_smbus_read_word_data
+#endif /*VENDOR_EDIT*/
 
 #ifdef OPLUS_FEATURE_FINGERPRINT
   devm_gpio_free
@@ -107,4 +109,42 @@
   set_normalized_timespec
 #endif /*OPLUS_FEATURE_TP_BASIC*/
 
+#ifdef OPLUS_FEATURE_QCOM_WATCHDOG
+  oplus_dump_cpu_online_smp_call
+  oplus_get_cpu_ping_mask
+  oplus_dump_wdog_cpu
+  oplus_show_utc_time
+#endif
+
+#ifdef OPLUS_FEATURE_APP_MONITOR
+  statistics_monitor_apps_rtt_via_uid
+  apps_monitor_netlink_send_to_user
+#endif
+
+#ifdef OPLUS_FEATURE_WIFI_DCS_SWITCH
+#Add for wifi switch monitor
+  driver_create_file
+#endif /* OPLUS_FEATURE_WIFI_DCS_SWITCH */
+
+#ifdef OPLUS_FEATURE_NFC_GKI
+  prj_name
+#endif
 revert_creds
+
+#ifdef OPLUS_FEATURE_EXPLORER
+sdio_enable_func
+sdio_disable_func
+sdio_release_host
+sdio_claim_host
+sdio_release_irq
+sdio_claim_irq
+sdio_unregister_driver
+sdio_register_driver
+sdio_set_block_size
+sdio_writesb
+sdio_memcpy_toio
+sdio_memcpy_fromio
+sdio_writeb
+sdio_readb
+sdio_writeb_readb
+#endif/*OPLUS_FEATURE_EXPLORER*/

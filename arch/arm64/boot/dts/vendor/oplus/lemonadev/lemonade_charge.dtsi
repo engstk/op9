@@ -1198,3 +1198,15 @@
 	status = "ok";
 	qcom,disable-pm-ops;
 };
+
+&ibat_lvl0 {
+	temperature = <7500>;
+	hysteresis = <200>;
+	type = "passive";
+};
+&ibat_lvl1 {
+	temperature = <10000>;
+	hysteresis = <200>;
+	type = "passive";
+};
+

@@ -4,7 +4,6 @@
 ** Description : oplus esd feature
 ** Version : 1.0
 ** Date : 2020/04/15
-** Author : XXXXXXX@MM.Display.LCD Driver
 **
 ** ------------------------------- Revision History: -----------
 **  <author>        <data>        <version >        <desc>

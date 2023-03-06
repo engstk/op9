@@ -87,31 +87,33 @@
 
 #define MAX_CCI_WRITE_DATA_NUM 128
 
-enum cam_tof_state {
-	CAM_TOF_ACQUIRED,
-	CAM_TOF_RELEASED,
+enum cam_tof_state
+{
+    CAM_TOF_ACQUIRED,
+    CAM_TOF_RELEASED,
 };
 
-struct cam_tof_registered_driver_t {
-	bool platform_driver;
-	bool i2c_driver;
+struct cam_tof_registered_driver_t 
+{
+    bool platform_driver;
+    bool i2c_driver;
 };
 
-struct cam_tof_ctrl_t {
-	char device_name[CAM_CTX_DEV_NAME_MAX_LENGTH];
-	struct mutex mutex;
-	struct mutex cci_i2c_mutex;
-	struct platform_device *pdev;
-	struct camera_io_master io_master_info;
-	struct cam_hw_soc_info soc_info;
-	struct cam_sensor_power_ctrl_t power_info;
-	enum cam_tof_state state;
-	struct regulator *vdd;
-	/* continous cci write buf, use a static allocated buf
-	to avoid repeating alloc/free */
-	uint32_t w_buf[sizeof(struct cam_sensor_i2c_reg_array) *
-				     MAX_CCI_WRITE_DATA_NUM];
-
+struct cam_tof_ctrl_t
+{
+    char device_name[CAM_CTX_DEV_NAME_MAX_LENGTH];
+    struct mutex mutex;
+    struct mutex cci_i2c_mutex;
+    struct platform_device *pdev;
+    struct camera_io_master io_master_info;
+    struct cam_hw_soc_info soc_info;
+    struct cam_sensor_power_ctrl_t power_info;
+    enum cam_tof_state state;
+    struct regulator *vdd;
+    /* continous cci write buf, use a static allocated buf 
+    to avoid repeating alloc/free */
+    uint32_t w_buf[sizeof(struct cam_sensor_i2c_reg_array) * MAX_CCI_WRITE_DATA_NUM];
+	
 };
 
 

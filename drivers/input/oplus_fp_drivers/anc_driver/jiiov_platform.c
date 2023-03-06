@@ -1132,7 +1132,7 @@ static int __init ancfp_init(void)
 {
     int rc;
 
-    if (FP_JIIOV_0302 != get_fpsensor_type()) {
+    if ((FP_JIIOV_0302 != get_fpsensor_type()) && (FP_JIIOV_0301 != get_fpsensor_type())) {
         pr_err("%s, found not jiiov sensor\n", __func__);
         rc = -EINVAL;
         return rc;
@@ -1177,6 +1177,7 @@ static void __exit ancfp_exit(void)
 late_initcall(ancfp_init);
 module_exit(ancfp_exit);
 
+MODULE_SOFTDEP("pre:oplus_fp_common");
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("JIIOV");
 MODULE_DESCRIPTION("JIIOV fingerprint sensor device driver");

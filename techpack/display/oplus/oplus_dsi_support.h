@@ -4,7 +4,6 @@
 ** Description : display driver private management
 ** Version : 1.0
 ** Date : 2018/03/17
-** Author : Jie.Hu@PSW.MM.Display.Stability
 **
 ** ------------------------------- Revision History: -----------
 **  <author>        <data>        <version >        <desc>
@@ -64,6 +63,8 @@ enum oplus_display_cabc_status {
 	OPLUS_DISPLAY_CABC_UI,
 	OPLUS_DISPLAY_CABC_IMAGE,
 	OPLUS_DISPLAY_CABC_VIDEO,
+	OPLUS_DISPLAY_CABC_UNLOCK = 8,
+	OPLUS_DISPLAY_CABC_LOCK = 9,
 	OPLUS_DISPLAY_CABC_UNKNOW,
 };
 

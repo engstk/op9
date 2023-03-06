@@ -1,20 +1,7 @@
- /************************************************************************************
-** File: - fingerprints_hal\drivers\goodix_fp\gf_spi.h
-** OPLUS_FEATURE_FINGERPRINT
-** Copyright (C), 2008-2016, OPLUS Mobile Comm Corp., Ltd
-**
-** Description:
-**      driver definition for sensor driver
-**
-** Version: 1.0
-** Date created: 15:03:11,12/08/2017
-** Author:oujinrong@BSP.Fingerprint.Basic
-** TAG: BSP.Fingerprint.Basic
-**
-** --------------------------- Revision History: --------------------------------
-** <author>     <data>        <desc>
-**  oujinrong   2019/09/03    add power list for Euclid
-************************************************************************************/
+/* SPDX-License-Identifier: GPL-2.0-only */
+/*
+ * Copyright (C) 2018-2020 Oplus. All rights reserved.
+ */
 
 #ifndef __GF_SPI_H
 #define __GF_SPI_H
@@ -108,10 +95,12 @@ struct gf_ioc_chip_info {
 #define GF_IOC_GET_FW_INFO      _IOR(GF_IOC_MAGIC, 11, uint8_t)
 #define GF_IOC_REMOVE           _IO(GF_IOC_MAGIC, 12)
 #define GF_IOC_CHIP_INFO        _IOW(GF_IOC_MAGIC, 13, struct gf_ioc_chip_info)
-
+#define GF_IOC_POWER_RESET      _IO(GF_IOC_MAGIC, 17)
 #define GF_IOC_WAKELOCK_TIMEOUT_ENABLE        _IO(GF_IOC_MAGIC, 18 )
 #define GF_IOC_WAKELOCK_TIMEOUT_DISABLE        _IO(GF_IOC_MAGIC, 19 )
 #define GF_IOC_CLEAN_TOUCH_FLAG        _IO(GF_IOC_MAGIC, 20 )
+#define GF_IOC_AUTO_SEND_TOUCHDOWN        _IO(GF_IOC_MAGIC, 21)
+#define GF_IOC_AUTO_SEND_TOUCHUP        _IO(GF_IOC_MAGIC, 22)
 
 #if defined(SUPPORT_NAV_EVENT)
 #define GF_IOC_NAV_EVENT	_IOW(GF_IOC_MAGIC, 14, gf_nav_event_t)
@@ -184,6 +173,7 @@ int gf_power_off(struct gf_dev *gf_dev);
 
 int gf_hw_reset(struct gf_dev *gf_dev, unsigned int delay_ms);
 int gf_irq_num(struct gf_dev *gf_dev);
+int gf_power_reset(struct gf_dev *gf_dev);
 
 void sendnlmsg(char *msg);
 int netlink_init(void);

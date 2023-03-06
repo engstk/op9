@@ -29,30 +29,30 @@
 #include "tof8801_driver.h"
 
 const char *tof8801_bootloader_cmd_stat_str[MAX_BL_CMD_STAT] = {
-	"READY",
-	"ERR_SIZE",
-	"ERR_CSUM",
-	"ERR_RES",
-	"ERR_APP",
-	"ERR_TIMEOUT",
-	"ERR_LOCK",
-	"ERR_RANGE",
-	"ERR_MORE",
-	"ERROR1",
-	"ERROR2",
-	"ERROR3",
-	"ERROR4",
-	"ERROR5",
-	"ERROR6",
-	"ERROR7",
-	"CMD_BUSY",
+  "READY"         ,
+  "ERR_SIZE"      ,
+  "ERR_CSUM"      ,
+  "ERR_RES"       ,
+  "ERR_APP"       ,
+  "ERR_TIMEOUT"   ,
+  "ERR_LOCK"      ,
+  "ERR_RANGE"     ,
+  "ERR_MORE"      ,
+  "ERROR1"        ,
+  "ERROR2"        ,
+  "ERROR3"        ,
+  "ERROR4"        ,
+  "ERROR5"        ,
+  "ERROR6"        ,
+  "ERROR7"        ,
+  "CMD_BUSY"      ,
 };
 
 void tof8801_BL_init_app(struct tof8801_BL_application *BL_app)
 {
-	//Wipe all local settings for bootloader, (except app_id)
-	memset(BL_app, 0, sizeof(struct tof8801_BL_application));
-	BL_app->app_id = TOF8801_APP_ID_BOOTLOADER;
+  //Wipe all local settings for bootloader, (except app_id)
+  memset(BL_app, 0, sizeof(struct tof8801_BL_application));
+  BL_app->app_id = TOF8801_APP_ID_BOOTLOADER;
 }
 
 /**
@@ -62,9 +62,9 @@ void tof8801_BL_init_app(struct tof8801_BL_application *BL_app)
  */
 int is_BL_cmd_busy(struct i2c_client *client)
 {
-	char status = CMD_BUSY;
-	tof8801_get_register(client, TOF8801_CMD_STAT, &status);
-	return TOF8801_BL_IS_CMD_BUSY(status);
+  char status = CMD_BUSY;
+  tof8801_get_register(client, TOF8801_CMD_STAT, &status);
+  return TOF8801_BL_IS_CMD_BUSY(status);
 }
 
 /**
@@ -72,9 +72,9 @@ int is_BL_cmd_busy(struct i2c_client *client)
  *
  * @app: pointer to bootloder application struct
  */
-char *get_BL_cmd_buf(struct tof8801_BL_application *app)
+char * get_BL_cmd_buf(struct tof8801_BL_application *app)
 {
-	return app->BL_command.anon_cmd.data;
+  return app->BL_command.anon_cmd.data;
 }
 
 /**
@@ -82,9 +82,9 @@ char *get_BL_cmd_buf(struct tof8801_BL_application *app)
  *
  * @app: pointer to bootloder application struct
  */
-char *get_BL_rsp_buf(struct tof8801_BL_application *app)
+char * get_BL_rsp_buf(struct tof8801_BL_application *app)
 {
-	return app->BL_response.anon_resp.data;
+  return app->BL_response.anon_resp.data;
 }
 
 /**
@@ -96,63 +96,50 @@ char *get_BL_rsp_buf(struct tof8801_BL_application *app)
  * @num_retries: how many times to retry to retrieve status
  */
 int tof8801_BL_read_status(struct i2c_client *client,
-			   struct tof8801_BL_application *BL_app,
-			   int num_retries)
+                           struct tof8801_BL_application *BL_app,
+                           int num_retries)
 {
-	int error = 0;
-	char *rbuf = get_BL_rsp_buf(BL_app);
-	char *status = &BL_app->BL_response.short_resp.status;
-	char *rdata_size = &BL_app->BL_response.short_resp.size;
-	char chksum;
-
-	if (num_retries < 0)
-		num_retries = 5;
-
-	do {
-		num_retries -= 1;
-		error = tof_i2c_read(client, TOF8801_CMD_STAT,
-				     rbuf, TOF8801_I2C_HEADER_SIZE);
-
-		if (error)
-			continue;
-
-		if (TOF8801_BL_IS_CMD_BUSY(*status)) {
-			/* CMD is still executing, wait and retry */
-			udelay(TOF8801_BL_CMD_WAIT_MSEC * 1000);
-
-			if (num_retries <= 0) {
-				dev_info(&client->dev, "BL application is busy: %#04x", *status);
-				error = -EBUSY;
-			}
-
-			continue;
-		}
-
-		/* if we have reached here, the command has either succeeded or failed */
-		if (*rdata_size >= 0) {
-			/* read in data part and csum */
-			error = tof_i2c_read(client, TOF8801_CMD_STAT,
-					     rbuf, TOF8801_CALC_BL_RSP_SIZE(*rdata_size));
-
-			if (error)
-				continue;
-
-			chksum = (char) ~tof8801_calc_chksum(rbuf,
-							     TOF8801_CALC_BL_RSP_SIZE(*rdata_size));
-
-			if ((chksum != TOF_VALID_CHKSUM) && (num_retries <= 0)) {
-				dev_err(&client->dev,
-					"Checksum verification of Response failed: %#04x", chksum);
-				return -EIO;
-			}
-
-			/* all done, break and return */
-			break;
-		}
-	} while ((error == 0) && (num_retries > 0));
-
-	dev_dbg(&client->dev, "BL application wait for response: \'%d\'", error);
-	return error;
+  int error = 0;
+  char *rbuf = get_BL_rsp_buf(BL_app);
+  char *status = &BL_app->BL_response.short_resp.status;
+  char *rdata_size = &BL_app->BL_response.short_resp.size;
+  char chksum;
+  if (num_retries < 0)
+    num_retries = 5;
+  do {
+    num_retries -= 1;
+    error = tof_i2c_read(client, TOF8801_CMD_STAT,
+                         rbuf, TOF8801_I2C_HEADER_SIZE);
+    if (error)
+      continue;
+    if (TOF8801_BL_IS_CMD_BUSY(*status)) {
+      /* CMD is still executing, wait and retry */
+      udelay(TOF8801_BL_CMD_WAIT_MSEC*1000);
+      if (num_retries <= 0) {
+        dev_info(&client->dev, "BL application is busy: %#04x", *status);
+        error = -EBUSY;
+      }
+      continue;
+    }
+    /* if we have reached here, the command has either succeeded or failed */
+    if ( *rdata_size >= 0 ) {
+      /* read in data part and csum */
+      error = tof_i2c_read(client, TOF8801_CMD_STAT,
+                           rbuf, TOF8801_CALC_BL_RSP_SIZE(*rdata_size));
+      if (error)
+        continue;
+      chksum = (char) ~tof8801_calc_chksum(rbuf, TOF8801_CALC_BL_RSP_SIZE(*rdata_size));
+      if ((chksum != TOF_VALID_CHKSUM) && (num_retries <= 0)) {
+        dev_err(&client->dev,
+                "Checksum verification of Response failed: %#04x", chksum);
+        return -EIO;
+      }
+      /* all done, break and return */
+      break;
+    }
+  } while ((error == 0) && (num_retries > 0));
+  dev_dbg(&client->dev, "BL application wait for response: \'%d\'", error);
+  return error;
 }
 
 /**
@@ -163,13 +150,12 @@ int tof8801_BL_read_status(struct i2c_client *client,
  */
 char tof8801_calc_chksum(const char *data, char size)
 {
-	unsigned int sum = 0;
-	int idx = 0;
-
-	for (; idx < size; idx++)
-		sum += data[idx];
-
-	return (char) ~sum; /* 1's complement of lowest byte */
+  unsigned int sum = 0;
+  int idx = 0;
+  for (; idx < size; idx++) {
+    sum += data[idx];
+  }
+  return (char) ~sum; /* 1's complement of lowest byte */
 }
 
 /**
@@ -178,22 +164,19 @@ char tof8801_calc_chksum(const char *data, char size)
  * @client: pointer to i2c_client
  * @BL_app: pointer to BL application struct, result will be in BL_response
  */
-int tof8801_BL_send_rcv_cmd(struct i2c_client *client,
-			    struct tof8801_BL_application *BL_app)
+int tof8801_BL_send_rcv_cmd(struct i2c_client *client, struct tof8801_BL_application *BL_app)
 {
-	int error = -1;
-	char *wbuf = get_BL_cmd_buf(BL_app);
-	char wsize = TOF8801_CALC_BL_CMD_SIZE(wbuf[1]);
+  int error = -1;
+  char *wbuf = get_BL_cmd_buf(BL_app);
+  char wsize = TOF8801_CALC_BL_CMD_SIZE(wbuf[1]);
+  if (is_BL_cmd_busy(client))
+    return error;
 
-	if (is_BL_cmd_busy(client))
-		return error;
+  error = tof_i2c_write(client, TOF8801_CMD_STAT, wbuf, wsize);
+  if (error)
+    return error;
 
-	error = tof_i2c_write(client, TOF8801_CMD_STAT, wbuf, wsize);
-
-	if (error)
-		return error;
-
-	return tof8801_BL_read_status(client, BL_app, 5);
+  return tof8801_BL_read_status(client, BL_app, 5);
 }
 
 /**
@@ -204,22 +187,19 @@ int tof8801_BL_send_rcv_cmd(struct i2c_client *client,
  * @client: pointer to i2c_client
  * @BL_app: pointer to BL application struct
  */
-int tof8801_BL_send_cmd(struct i2c_client *client,
-			struct tof8801_BL_application *BL_app)
+int tof8801_BL_send_cmd(struct i2c_client *client, struct tof8801_BL_application *BL_app)
 {
-	int error = -1;
-	char *wbuf = get_BL_cmd_buf(BL_app);
-	char wsize = TOF8801_CALC_BL_CMD_SIZE(wbuf[1]);
+  int error = -1;
+  char *wbuf = get_BL_cmd_buf(BL_app);
+  char wsize = TOF8801_CALC_BL_CMD_SIZE(wbuf[1]);
+  if (is_BL_cmd_busy(client))
+    return error;
 
-	if (is_BL_cmd_busy(client))
-		return error;
+  error = tof_i2c_write(client, TOF8801_CMD_STAT, wbuf, wsize);
+  if (error)
+    return error;
 
-	error = tof_i2c_write(client, TOF8801_CMD_STAT, wbuf, wsize);
-
-	if (error)
-		return error;
-
-	return error;
+  return error;
 }
 
 /**
@@ -230,16 +210,16 @@ int tof8801_BL_send_cmd(struct i2c_client *client,
  * @BL_app: pointer to BL application struct
  */
 int tof8801_BL_short_cmd(struct i2c_client *client,
-			 struct tof8801_BL_application *BL_app,
-			 enum tof8801_bootloader_cmd cmd_e)
+                         struct tof8801_BL_application *BL_app,
+                         enum tof8801_bootloader_cmd cmd_e)
 {
-	struct tof8801_BL_short_cmd *cmd = &(BL_app->BL_command.short_cmd);
-	cmd->command = cmd_e;
-	cmd->size = 0;
-	cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
-					  TOF8801_CALC_CHKSUM_SIZE(cmd->size));
+  struct tof8801_BL_short_cmd *cmd = &(BL_app->BL_command.short_cmd);
+  cmd->command = cmd_e;
+  cmd->size = 0;
+  cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
+                                    TOF8801_CALC_CHKSUM_SIZE(cmd->size));
 
-	return tof8801_BL_send_rcv_cmd(client, BL_app);
+  return tof8801_BL_send_rcv_cmd(client, BL_app);
 }
 
 /**
@@ -248,21 +228,19 @@ int tof8801_BL_short_cmd(struct i2c_client *client,
  * @BL_app: pointer to BL application struct
  */
 int tof8801_BL_reset(struct i2c_client *client,
-		     struct tof8801_BL_application *BL_app)
+                     struct tof8801_BL_application *BL_app)
 {
-	int error;
-	struct tof8801_BL_short_cmd *cmd = &(BL_app->BL_command.short_cmd);
-	cmd->command = BL_RESET;
-	cmd->size = 0;
-	cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
-					  TOF8801_CALC_CHKSUM_SIZE(cmd->size));
+  int error;
+  struct tof8801_BL_short_cmd *cmd = &(BL_app->BL_command.short_cmd);
+  cmd->command = BL_RESET;
+  cmd->size = 0;
+  cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
+                                    TOF8801_CALC_CHKSUM_SIZE(cmd->size));
 
-	error = tof8801_BL_send_cmd(client, BL_app);
-
-	if (error)
-		return error;
-
-	return tof_wait_for_cpu_ready(client);
+  error = tof8801_BL_send_cmd(client, BL_app);
+  if (error)
+    return error;
+  return tof_wait_for_cpu_ready(client);
 }
 
 /**
@@ -271,21 +249,19 @@ int tof8801_BL_reset(struct i2c_client *client,
  * @BL_app: pointer to BL application struct
  */
 int tof8801_BL_ram_remap(struct i2c_client *client,
-			 struct tof8801_BL_application *BL_app)
+                         struct tof8801_BL_application *BL_app)
 {
-	int error;
-	struct tof8801_BL_short_cmd *cmd = &(BL_app->BL_command.short_cmd);
-	cmd->command = BL_RAMREMAP_RESET;
-	cmd->size = 0;
-	cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
-					  TOF8801_CALC_CHKSUM_SIZE(cmd->size));
+  int error;
+  struct tof8801_BL_short_cmd *cmd = &(BL_app->BL_command.short_cmd);
+  cmd->command = BL_RAMREMAP_RESET;
+  cmd->size = 0;
+  cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
+                                    TOF8801_CALC_CHKSUM_SIZE(cmd->size));
 
-	error = tof8801_BL_send_cmd(client, BL_app);
-
-	if (error)
-		return error;
-
-	return tof_wait_for_cpu_startup(client);
+  error = tof8801_BL_send_cmd(client, BL_app);
+  if (error)
+    return error;
+  return tof_wait_for_cpu_startup(client);
 }
 
 /**
@@ -295,18 +271,18 @@ int tof8801_BL_ram_remap(struct i2c_client *client,
  * @BL_app: pointer to BL application struct
  */
 int tof8801_BL_addr_ram(struct i2c_client *client,
-			struct tof8801_BL_application *BL_app,
-			int addr)
+                        struct tof8801_BL_application *BL_app,
+                        int addr)
 {
-	struct tof8801_BL_addr_ram_cmd *cmd = &(BL_app->BL_command.addr_ram_cmd);
-	cmd->command = BL_ADDR_RAM;
-	cmd->size = 2;
-	cmd->addr_lsb  = addr & 0xff;
-	cmd->addr_msb  = (addr >> 8) & 0xff;
-	cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
-					  TOF8801_CALC_CHKSUM_SIZE(cmd->size));
+  struct tof8801_BL_addr_ram_cmd *cmd = &(BL_app->BL_command.addr_ram_cmd);
+  cmd->command = BL_ADDR_RAM;
+  cmd->size = 2;
+  cmd->addr_lsb  = addr & 0xff;
+  cmd->addr_msb  = (addr >> 8) & 0xff;
+  cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
+                                    TOF8801_CALC_CHKSUM_SIZE(cmd->size));
 
-	return tof8801_BL_send_rcv_cmd(client, BL_app);
+  return tof8801_BL_send_rcv_cmd(client, BL_app);
 }
 
 /**
@@ -319,36 +295,31 @@ int tof8801_BL_addr_ram(struct i2c_client *client,
  *        *** must be big enough to hold 'num_bytes' Bytes ***
  */
 int tof8801_BL_read_ram(struct i2c_client *client,
-			struct tof8801_BL_application *BL_app,
-			char *rbuf, int len)
+                        struct tof8801_BL_application *BL_app,
+                        char * rbuf, int len)
 {
-	int error = 0;
-	int rc;
-	struct tof8801_BL_read_ram_cmd *cmd = &(BL_app->BL_command.read_ram_cmd);
-	struct tof8801_BL_read_ram_resp *rsp = &(BL_app->BL_response.read_ram_resp);
-	int num = 0;
-
-	do {
-		cmd->command = BL_R_RAM;
-		cmd->size = 1;
-		cmd->num_bytes = ((len - num) >= TOF8801_I2C_MAX_DATA_SIZE) ?
-				 TOF8801_I2C_MAX_DATA_SIZE : (char)(len - num);
-		cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
-						  TOF8801_CALC_CHKSUM_SIZE(cmd->size));
-		rc = tof8801_BL_send_rcv_cmd(client, BL_app);
-
-		if (!rc) {
-			/* command was successful, lets copy a batch of data over */
-			if (rbuf)
-				memcpy((rbuf + num), rsp->data, rsp->size);
-
-			num += cmd->num_bytes;
-		}
-
-		error = error ? error : (rc ? rc : 0);
-	} while ((num < len) && !rc);
-
-	return error;
+  int error = 0;
+  int rc;
+  struct tof8801_BL_read_ram_cmd *cmd = &(BL_app->BL_command.read_ram_cmd);
+  struct tof8801_BL_read_ram_resp *rsp = &(BL_app->BL_response.read_ram_resp);
+  int num = 0;
+  do {
+    cmd->command = BL_R_RAM;
+    cmd->size = 1;
+    cmd->num_bytes = ((len - num) >= TOF8801_I2C_MAX_DATA_SIZE) ?
+                     TOF8801_I2C_MAX_DATA_SIZE : (char) (len - num);
+    cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
+                                      TOF8801_CALC_CHKSUM_SIZE(cmd->size));
+    rc = tof8801_BL_send_rcv_cmd(client, BL_app);
+    if (!rc) {
+      /* command was successful, lets copy a batch of data over */
+      if (rbuf)
+        memcpy((rbuf + num), rsp->data, rsp->size);
+      num += cmd->num_bytes;
+    }
+    error = error ? error : (rc ? rc : 0);
+  } while ((num < len) && !rc);
+  return error;
 }
 
 /**
@@ -360,38 +331,33 @@ int tof8801_BL_read_ram(struct i2c_client *client,
  * @len: number of bytes to write, capped at 127 (0x80)
  */
 int tof8801_BL_write_ram(struct i2c_client *client,
-			 struct tof8801_BL_application *BL_app,
-			 const char *buf, int len)
+                         struct tof8801_BL_application *BL_app,
+                         const char *buf, int len)
 {
-	struct tof8801_BL_write_ram_cmd *cmd = &(BL_app->BL_command.write_ram_cmd);
-	int idx = 0;
-	int num = 0;
-	char chunk_bytes = 0;
-	int error = 0;
-	int rc;
-
-	do {
-		cmd->command = BL_W_RAM;
-		chunk_bytes = ((len - num) > TOF8801_I2C_MAX_DATA_SIZE) ?
-			      TOF8801_I2C_MAX_DATA_SIZE : (char)(len - num);
-		cmd->size = chunk_bytes;
-
-		for (idx = 0; idx < cmd->size; idx++)
-			cmd->data[idx] = buf[num + idx];
-
-		/* add chksum to end */
-		cmd->data[(unsigned char)cmd->size] =
-			tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
-					    TOF8801_CALC_CHKSUM_SIZE(cmd->size));
-		rc = tof8801_BL_send_rcv_cmd(client, BL_app);
-
-		if (!rc)
-			num += chunk_bytes;
-
-		error = error ? error : (rc ? rc : 0);
-	} while ((num < len) && !rc);
-
-	return error;
+  struct tof8801_BL_write_ram_cmd *cmd = &(BL_app->BL_command.write_ram_cmd);
+  int idx = 0;
+  int num = 0;
+  char chunk_bytes = 0;
+  int error = 0;
+  int rc;
+  do {
+    cmd->command = BL_W_RAM;
+    chunk_bytes = ((len - num) > TOF8801_I2C_MAX_DATA_SIZE) ?
+                  TOF8801_I2C_MAX_DATA_SIZE : (char) (len - num);
+    cmd->size = chunk_bytes;
+    for(idx = 0; idx < cmd->size; idx++) {
+      cmd->data[idx] = buf[num + idx];
+    }
+    /* add chksum to end */
+    cmd->data[(unsigned char)cmd->size] =
+      tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
+                          TOF8801_CALC_CHKSUM_SIZE(cmd->size));
+    rc = tof8801_BL_send_rcv_cmd(client, BL_app);
+    if (!rc)
+      num += chunk_bytes;
+    error = error ? error : (rc ? rc : 0);
+  } while ((num < len) && !rc);
+  return error;
 }
 
 /**
@@ -402,16 +368,16 @@ int tof8801_BL_write_ram(struct i2c_client *client,
  * @salt:   salt value to set for encrypted upload
  */
 int tof8801_BL_upload_init(struct i2c_client *client,
-			   struct tof8801_BL_application *BL_app,
-			   char salt)
+                           struct tof8801_BL_application *BL_app,
+                           char salt)
 {
-	struct tof8801_BL_upload_init_cmd *cmd = &(BL_app->BL_command.upload_init_cmd);
-	cmd->command = BL_UPLOAD_INIT;
-	cmd->size = 1;
-	cmd->seed = salt;
-	cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
-					  TOF8801_CALC_CHKSUM_SIZE(cmd->size));
+  struct tof8801_BL_upload_init_cmd *cmd = &(BL_app->BL_command.upload_init_cmd);
+  cmd->command = BL_UPLOAD_INIT;
+  cmd->size = 1;
+  cmd->seed = salt;
+  cmd->chksum = tof8801_calc_chksum(get_BL_cmd_buf(BL_app),
+                                    TOF8801_CALC_CHKSUM_SIZE(cmd->size));
 
-	return tof8801_BL_send_rcv_cmd(client, BL_app);
+  return tof8801_BL_send_rcv_cmd(client, BL_app);
 }
 

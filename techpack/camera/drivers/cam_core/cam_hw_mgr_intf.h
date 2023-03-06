@@ -110,12 +110,10 @@ struct cam_hw_done_event_data {
  * struct cam_hw_acquire_args - Payload for acquire command
  *
  * @context_data:          Context data pointer for the callback function
- * @ctx_id:                Core context id
  * @event_cb:              Callback function array
  * @num_acq:               Total number of acquire in the payload
  * @acquire_info:          Acquired resource array pointer
  * @ctxt_to_hw_map:        HW context (returned)
- * @hw_mgr_ctx_id          HWMgr context id(returned)
  * @custom_enabled:        ctx has custom enabled
  * @use_frame_header_ts:   Use frame header for qtimer ts
  * @support_consumed_addr: The platform has last consumed addr register
@@ -128,16 +126,17 @@ struct cam_hw_done_event_data {
  */
 struct cam_hw_acquire_args {
 	void                        *context_data;
-	uint32_t                     ctx_id;
 	cam_hw_event_cb_func         event_cb;
 	uint32_t                     num_acq;
 	uint32_t                     acquire_info_size;
 	uintptr_t                    acquire_info;
 	void                        *ctxt_to_hw_map;
-	uint32_t                     hw_mgr_ctx_id;
 	bool                         custom_enabled;
 	bool                         use_frame_header_ts;
 	bool                         support_consumed_addr;
+#ifdef OPLUS_FEATURE_CAMERA_COMMON//lanhe todo
+	bool                         use_rdi_sof;
+#endif
 
 	uint32_t    acquired_hw_id[CAM_MAX_ACQ_RES];
 	uint32_t    acquired_hw_path[CAM_MAX_ACQ_RES][CAM_MAX_HW_SPLIT];
@@ -293,9 +292,9 @@ struct cam_hw_config_args {
 struct cam_hw_flush_args {
 	void                           *ctxt_to_hw_map;
 	uint32_t                        num_req_pending;
-	void                           *flush_req_pending[40];
+	void                           *flush_req_pending[20];
 	uint32_t                        num_req_active;
-	void                           *flush_req_active[40];
+	void                           *flush_req_active[20];
 	enum flush_type_t               flush_type;
 	uint32_t                        last_flush_req;
 };

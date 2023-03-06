@@ -20,14 +20,14 @@
 #else
 #include <linux/notifier.h>
 #include <linux/fb.h>
-#ifdef CONFIG_QCOM_KGSL
+#ifdef CONFIG_DRM_MSM
 #include <linux/msm_drm_notify.h>
 #endif
 #endif
 
 #ifdef CONFIG_OPLUS_CHARGER_MTK
 #include <linux/i2c.h>
-
+//#include <mt-plat/battery_meter.h>
 #include <mt-plat/mtk_boot.h>
 #ifdef CONFIG_OPLUS_CHARGER_MTK6779
 #include "charger_ic/oplus_battery_mtk6779.h"
@@ -160,6 +160,7 @@
 #define NOTIFY_GAUGE_I2C_ERR			21
 #define NOTIFY_BAT_VOLTAGE_DIFF			22
 #define NOTIFY_OVP_VOLTAGE_ABNORMAL		23
+
 
 #define OPLUS_CHG_500_CHARGING_CURRENT	500
 #define OPLUS_CHG_900_CHARGING_CURRENT	900
@@ -468,36 +469,36 @@ struct oplus_chg_limits {
 	int ffc2_normal_fastchg_ma;			/*<=35C,700ma*/
 	int ffc2_exit_step_ma;				/*<=35C,700ma*/
 	int ffc2_warm_exit_step_ma;
-	int ffc1_normal_vfloat_sw_limit;
+	int ffc1_normal_vfloat_sw_limit;			//4.45V
 	int ffc1_warm_vfloat_sw_limit;
 	int ffc2_normal_vfloat_sw_limit;
 	int ffc2_warm_vfloat_sw_limit;
-	int ffc_temp_normal_vfloat_mv;
+	int ffc_temp_normal_vfloat_mv;				//4.5v
 	int ffc2_temp_warm_vfloat_mv;
 	int ffc_temp_warm_vfloat_mv;
-	int ffc1_temp_normal_vfloat_mv;
-	int ffc2_temp_normal_vfloat_mv;
-	int ffc_normal_vfloat_over_sw_limit;
+	int ffc1_temp_normal_vfloat_mv;				//4.5v
+	int ffc2_temp_normal_vfloat_mv;				//4.5v
+	int ffc_normal_vfloat_over_sw_limit;		//4.5V
 	int ffc_warm_vfloat_over_sw_limit;
-	int ffc1_normal_vfloat_over_sw_limit;
-	int ffc2_normal_vfloat_over_sw_limit;
+	int ffc1_normal_vfloat_over_sw_limit;		//4.5V
+	int ffc2_normal_vfloat_over_sw_limit;		//4.5V
 	int ffc2_warm_vfloat_over_sw_limit;
 	int default_iterm_ma;						/*16~45 default value*/
 	int default_temp_normal_fastchg_current_ma;
 	int default_normal_vfloat_sw_limit;
 	int default_temp_normal_vfloat_mv;
 	int default_normal_vfloat_over_sw_limit;
-	int default_temp_little_cool_fastchg_current_ma;
+	int default_temp_little_cool_fastchg_current_ma;		//12 ~ 16
 	int default_little_cool_vfloat_sw_limit;
 	int default_temp_little_cool_vfloat_mv;
 	int default_little_cool_vfloat_over_sw_limit;
 	int default_temp_little_cool_fastchg_current_ma_high;
 	int default_temp_little_cool_fastchg_current_ma_low;
-	int default_temp_little_cold_fastchg_current_ma_high;
+	int default_temp_little_cold_fastchg_current_ma_high;	//0 ~ 5
 	int default_temp_little_cold_fastchg_current_ma_low;
-	int default_temp_cool_fastchg_current_ma_high;
+	int default_temp_cool_fastchg_current_ma_high;			// 5 ~ 12
 	int default_temp_cool_fastchg_current_ma_low;
-	int default_temp_warm_fastchg_current_ma;
+	int default_temp_warm_fastchg_current_ma;				//44 ~ 53
 	int default_input_current_charger_ma;
 };
 
@@ -518,11 +519,11 @@ struct battery_data {
 	int BAT_BatterySenseVoltage;
 	int BAT_ISenseVoltage;
 	int BAT_ChargerVoltage;
-	int battery_request_poweroff;
+	int battery_request_poweroff;//low battery in sleep
 	int fastcharger;
 	int charge_technology;
 	/* Dual battery */
-	int BAT_MMI_CHG;
+	int BAT_MMI_CHG;//for MMI_CHG_TEST
 	int BAT_FCC;
 	int BAT_SOH;
 	int BAT_CC;
@@ -554,6 +555,7 @@ struct normalchg_gpio_pinctrl {
 	struct pinctrl_state *uart_pull_down;
 	struct pinctrl_state *chargerid_adc_default;
 };
+
 
 struct short_c_batt_data {
 	int short_c_bat_cv_mv;
@@ -845,9 +847,9 @@ struct oplus_chg_chip {
 	bool fg_bcl_poll;
 	bool chg_powersave;
 	bool healthd_ready;
-
+// #ifdef CONFIG_FB nick.hu todo
 	struct notifier_block chg_fb_notify;
-
+// #endif
 	struct normalchg_gpio_pinctrl normalchg_gpio;
 	int chargerid_volt;
 	bool chargerid_volt_got;
@@ -907,6 +909,8 @@ struct oplus_chg_chip {
 	int check_battery_vol_count;
 #endif
 };
+
+
 
 struct oplus_chg_operations {
 	void (*get_usbtemp_volt)(struct oplus_chg_chip *chip);
@@ -1003,6 +1007,7 @@ struct oplus_chg_operations {
 #endif
 };
 
+
 /*********************************************
  * power_supply usb/ac/battery functions
  **********************************************/
@@ -1028,6 +1033,7 @@ extern int oplus_battery_get_property(struct power_supply *psy,
 	enum power_supply_property psp,
 	union power_supply_propval *val);
 #endif
+
 
 /*********************************************
  * oplus_chg_init - initialize oplus_chg_chip

@@ -31,12 +31,10 @@
 #include "cam_context.h"
 
 #ifdef OPLUS_FEATURE_CAMERA_COMMON
-void oplus_cam_flash_proc_init(struct cam_flash_ctrl *flash_ctl,
-			       struct platform_device *pdev);
-
+void oplus_cam_flash_proc_init(struct cam_flash_ctrl *flash_ctl, struct platform_device *pdev);
 int cam_flash_on(struct cam_flash_ctrl *flash_ctrl,
-		 struct cam_flash_frame_setting *flash_data,
-		 int mode);
+	struct cam_flash_frame_setting *flash_data,
+	int mode);
 #endif
 
 #endif /*_CAM_FLASH_DEV_H_*/

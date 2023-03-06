@@ -14,7 +14,11 @@
 #define CAM_REQ_MGR_MAX_LINKED_DEV     16
 #define MAX_REQ_SLOTS                  48
 
+#ifdef OPLUS_FEATURE_CAMERA_COMMON
+#define CAM_REQ_MGR_WATCHDOG_TIMEOUT          2000
+#else
 #define CAM_REQ_MGR_WATCHDOG_TIMEOUT          1000
+#endif
 #define CAM_REQ_MGR_WATCHDOG_TIMEOUT_DEFAULT  5000
 #define CAM_REQ_MGR_WATCHDOG_TIMEOUT_MAX      50000
 #define CAM_REQ_MGR_SCHED_REQ_TIMEOUT         1000
@@ -179,6 +183,10 @@ struct cam_req_mgr_traverse {
 	struct cam_req_mgr_apply          *apply_data;
 	struct cam_req_mgr_req_queue      *in_q;
 	bool                               validate_only;
+#ifdef OPLUS_FEATURE_CAMERA_COMMON
+	//lanhe add for use RDI for sensor apply
+	bool                               rdi_traverse;
+#endif
 	int32_t                            open_req_cnt;
 };
 
@@ -207,6 +215,11 @@ struct crm_tbl_slot_special_ops {
 	int32_t dev_hdl;
 	bool apply_at_eof;
 	bool is_applied;
+#ifdef OPLUS_FEATURE_CAMERA_COMMON
+	//lanhe add for use RDI for sensor apply
+	uint32_t use_rdi_sof_apply;  //set by devices which need use RDI SOF for apply
+	uint32_t rdi_sof_applied;	 //set while device was apply by RDI SOF
+#endif
 };
 
 /**
@@ -291,6 +304,10 @@ struct cam_req_mgr_req_queue {
 	int32_t                     num_slots;
 	struct cam_req_mgr_slot     slot[MAX_REQ_SLOTS];
 	int32_t                     rd_idx;
+#ifdef OPLUS_FEATURE_CAMERA_COMMON
+	//lanhe add
+	int32_t                     rdi_rd_idx;
+#endif
 	int32_t                     wr_idx;
 	int32_t                     last_applied_idx;
 };
@@ -311,6 +328,10 @@ struct cam_req_mgr_req_data {
 	int32_t                       num_tbl;
 	struct cam_req_mgr_apply      apply_data[CAM_PIPELINE_DELAY_MAX];
 	struct cam_req_mgr_apply      prev_apply_data[CAM_PIPELINE_DELAY_MAX];
+#ifdef OPLUS_FEATURE_CAMERA_COMMON
+	//lanhe add
+	struct cam_req_mgr_apply      rdi_apply_data[CAM_PIPELINE_DELAY_MAX];
+#endif
 	struct mutex                  lock;
 };
 
@@ -381,6 +402,7 @@ struct cam_req_mgr_connected_device {
  * @dual_trigger         : Links needs to wait for two triggers prior to
  *                         applying the settings
  * @trigger_cnt          : trigger count value per device initiating the trigger
+ * @eof_event_cnt        : Atomic variable to track the number of EOF requests
  * @skip_init_frame      : skip initial frames crm_wd_timer validation in the
  *                         case of long exposure use case
  * @last_sof_trigger_jiffies : Record the jiffies of last sof trigger jiffies
@@ -418,6 +440,7 @@ struct cam_req_mgr_core_link {
 	bool                                 dual_trigger;
 	uint32_t trigger_cnt[CAM_REQ_MGR_MAX_TRIGGERS]
 				[CAM_TRIGGER_MAX_POINTS + 1];
+	atomic_t                             eof_event_cnt;
 	bool                                 skip_init_frame;
 	uint64_t                             last_sof_trigger_jiffies;
 	bool                                 wq_congestion;

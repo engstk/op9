@@ -4,7 +4,6 @@
 ** Description : oplus dc_diming feature
 ** Version : 1.0
 ** Date : 2020/04/15
-** Author : Qianxu@MM.Display.LCD Driver
 **
 ** ------------------------------- Revision History: -----------
 **  <author>        <data>        <version >        <desc>

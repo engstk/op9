@@ -10208,6 +10208,7 @@ int voice_get_cvp_param(void)
 			if (ret < 0) {
 				pr_err("%s: Failed to send apr packet, error %d\n", __func__,
 				       ret);
+				kfree(get_param);
 				goto done;
 			}
 
@@ -10220,6 +10221,7 @@ int voice_get_cvp_param(void)
 			if (!ret) {
 				pr_err("%s: wait_event timeout\n", __func__);
 				ret = -ETIMEDOUT;
+				kfree(get_param);
 				goto done;
 			}
 

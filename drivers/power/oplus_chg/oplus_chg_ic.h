@@ -57,8 +57,7 @@ struct oplus_chg_ic_rx_ops {
 	int (*rx_get_cep_count)(struct oplus_chg_ic_dev *, int *);
 	int (*rx_get_cep_val)(struct oplus_chg_ic_dev *, int *);
 	int (*rx_get_work_freq)(struct oplus_chg_ic_dev *, int *);
-	int (*rx_get_rx_mode)(struct oplus_chg_ic_dev *,
-			      enum oplus_chg_wls_rx_mode *);
+	int (*rx_get_rx_mode)(struct oplus_chg_ic_dev *, enum oplus_chg_wls_rx_mode *);
 	int (*rx_set_dcdc_enable)(struct oplus_chg_ic_dev *);
 	int (*rx_set_trx_enable)(struct oplus_chg_ic_dev *, bool);
 	int (*rx_get_trx_status)(struct oplus_chg_ic_dev *, u8 *);
@@ -66,16 +65,13 @@ struct oplus_chg_ic_rx_ops {
 	int (*rx_get_headroom)(struct oplus_chg_ic_dev *, int *);
 	int (*rx_set_headroom)(struct oplus_chg_ic_dev *, int);
 	int (*rx_send_match_q)(struct oplus_chg_ic_dev *, u8);
-	int (*rx_set_fod_parm)(struct oplus_chg_ic_dev *, u8[], int);
-	int (*rx_send_msg)(struct oplus_chg_ic_dev *, unsigned char[], int len);
-	int (*rx_register_msg_callback)(struct oplus_chg_ic_dev *, void *,
-					void (*)(void *, u8[]));
+	int (*rx_set_fod_parm)(struct oplus_chg_ic_dev *, u8 [], int);
+	int (*rx_send_msg)(struct oplus_chg_ic_dev *, unsigned char [], int len);
+	int (* rx_register_msg_callback)(struct oplus_chg_ic_dev *, void *, void (*)(void *, u8 []));
 	int (*rx_get_fw_version_by_buf)(char *, int, u32 *);
 	int (*rx_get_fw_version_by_chip)(struct oplus_chg_ic_dev *, u32 *);
-	int (*rx_upgrade_firmware_by_buf)(struct oplus_chg_ic_dev *,
-					  unsigned char *, int);
-	int (*rx_upgrade_firmware_by_img)(struct oplus_chg_ic_dev *, char *,
-					  int);
+	int (*rx_upgrade_firmware_by_buf)(struct oplus_chg_ic_dev *, unsigned char *, int);
+	int (*rx_upgrade_firmware_by_img)(struct oplus_chg_ic_dev *, char *, int);
 	int (*rx_connect_check)(struct oplus_chg_ic_dev *);
 };
 
@@ -112,32 +108,27 @@ struct oplus_chg_ic_typec_ops {
 	int (*typec_get_vbus_status)(struct oplus_chg_ic_dev *, int *);
 };
 
-static inline void *
-oplus_chg_ic_get_drvdata(const struct oplus_chg_ic_dev *ic_dev)
+static inline void *oplus_chg_ic_get_drvdata(const struct oplus_chg_ic_dev *ic_dev)
 {
 	return dev_get_drvdata(ic_dev->dev);
 }
 
 void oplus_chg_ic_list_lock(void);
 void oplus_chg_ic_list_unlock(void);
-int oplsu_chg_ic_add_child(struct oplus_chg_ic_dev *ic_dev,
-			   struct oplus_chg_ic_dev *ch_dev);
-struct oplus_chg_ic_dev *
-oplsu_chg_ic_get_child_by_index(struct oplus_chg_ic_dev *p_dev, int c_index);
+int oplsu_chg_ic_add_child(struct oplus_chg_ic_dev *ic_dev, struct oplus_chg_ic_dev *ch_dev);
+struct oplus_chg_ic_dev *oplsu_chg_ic_get_child_by_index(struct oplus_chg_ic_dev *p_dev, int c_index);
 struct oplus_chg_ic_dev *oplsu_chg_ic_find_by_name(const char *name);
-struct oplus_chg_ic_dev *of_get_oplus_chg_ic(struct device_node *node,
-					     const char *prop_name);
+struct oplus_chg_ic_dev *of_get_oplus_chg_ic(struct device_node *node, const char *prop_name);
 #ifdef OPLUS_CHG_REG_DUMP_ENABLE
 int oplus_chg_ic_reg_dump(struct oplus_chg_ic_dev *ic_dev);
 int oplus_chg_ic_reg_dump_by_name(const char *name);
 void oplus_chg_ic_reg_dump_all(void);
 #endif
 struct oplus_chg_ic_dev *oplus_chg_ic_register(struct device *dev,
-					       const char *name, int index);
+	const char *name, int index);
 int oplus_chg_ic_unregister(struct oplus_chg_ic_dev *ic_dev);
-struct oplus_chg_ic_dev *
-devm_oplus_chg_ic_register(struct device *dev, const char *name, int index);
-int devm_oplus_chg_ic_unregister(struct device *dev,
-				 struct oplus_chg_ic_dev *ic_dev);
+struct oplus_chg_ic_dev *devm_oplus_chg_ic_register(struct device *dev,
+	const char *name, int index);
+int devm_oplus_chg_ic_unregister(struct device *dev, struct oplus_chg_ic_dev *ic_dev);
 
 #endif /* __OPLUS_CHG_IC_H__ */

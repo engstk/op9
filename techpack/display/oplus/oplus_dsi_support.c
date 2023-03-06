@@ -4,7 +4,6 @@
 ** Description : display driver private management
 ** Version : 1.1
 ** Date : 2020/09/06
-** Author : liping-m@PSW.MM.Display.Stability
 **
 ** ------------------------------- Revision History: -----------
 **  <author>        <data>        <version >        <desc>

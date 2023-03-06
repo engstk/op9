@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved. */
+/* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved. */
 
 #define pr_fmt(fmt) "PM8008: %s: " fmt, __func__
 
@@ -24,13 +24,25 @@
 #define pm8008_debug(reg, message, ...) \
 	pr_debug("%s: " message, (reg)->rdesc.name, ##__VA_ARGS__)
 
+#ifdef OPLUS_FEATURE_CHG_BASIC
+#define STARTUP_DELAY_USEC		200
+#else
 #define STARTUP_DELAY_USEC		20
+#endif
 #define VSET_STEP_SIZE_MV		1
 #define VSET_STEP_MV			8
 #define VSET_STEP_UV			(VSET_STEP_MV * 1000)
 
 #define MISC_BASE			0x900
-
+#ifdef OPLUS_FEATURE_CHG_BASIC
+#define PMIC_TYPE			0x0105
+#define PMIC_TYPE_PM8010		0x41
+#define PMIC_VERSION			0x0100
+#define PMIC_VERSION_1_0		0x10
+#define MBG_MODE_CONTROL		0x2c44
+#define MBG_STATUS			0x2C08
+#define FORCE_MBG_OK_BIT 		BIT(1)
+#endif
 #define MISC_CHIP_ENABLE_REG		(MISC_BASE + 0x50)
 #define CHIP_ENABLE_BIT			BIT(0)
 
@@ -62,17 +74,19 @@
 
 #define LDO_STEPPER_CTL_REG(base)	(base + 0x3b)
 #define STEP_RATE_MASK			GENMASK(1, 0)
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 /* Step rate in uV/us */
 #define PM8010_STEP_RATE		4800
 #endif
 
 #define LDO_PD_CTL_REG(base)		(base + 0xA0)
 #define STRONG_PD_EN_BIT		BIT(7)
+#define CLK_LEICA2_LFRC_AON_TRIM	0x51F2
+#define REVID_TP_REV		0x1F1
 
 #define PM8008_MAX_LDO			7
 
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 enum pmic_subtype {
 	PM8008_SUBTYPE,
 	PM8010_SUBTYPE,
@@ -92,7 +106,7 @@ struct pm8008_chip {
 	bool			suspended;
 };
 
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 struct reg_init_data {
 	u8			offset;
 	u8			data;
@@ -106,7 +120,7 @@ struct regulator_data {
 	int				max_uv;
 	int				hpm_min_load_ua;
 	int				min_dropout_uv;
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 	const struct reg_init_data	*reg_init;
 	unsigned int			reg_init_size;
 #endif
@@ -128,12 +142,12 @@ struct pm8008_regulator {
 	bool			chip_enabled;
 	int			mode;
 	int			uv;
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 	enum pmic_subtype	pmic_subtype;
 #endif
 };
 
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 static const struct regulator_data pm8008_reg_data[PM8008_MAX_LDO] = {
 #else
 static struct regulator_data reg_data[PM8008_MAX_LDO] = {
@@ -148,9 +162,9 @@ static struct regulator_data reg_data[PM8008_MAX_LDO] = {
 	{"l7", "vdd_l7",    1504000, 3400000, 10000, 300000},
 };
 
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 static const struct reg_init_data pm8010_p300_reg_init_data[] = {
-	{0x55, 0x8A},
+	{0x55, 0x8C},
 	{0x77, 0x03},
 };
 
@@ -196,7 +210,7 @@ static int pm8008_read(struct regmap *regmap,  u16 reg, u8 *val, int count)
 	return rc;
 }
 
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 static int pm8008_write(struct regmap *regmap, u16 reg, const u8 *val,
 			int count)
 #else
@@ -230,7 +244,8 @@ static int pm8008_masked_write(struct regmap *regmap, u16 reg, u8 mask,
 static int pm8008_chip_aggregate(struct pm8008_chip *chip)
 {
 	bool enable;
-	int rc;
+	int rc,  retry_count = 10;
+	u8 val;
 
 	lockdep_assert_held_once(&chip->lock);
 
@@ -247,6 +262,36 @@ static int pm8008_chip_aggregate(struct pm8008_chip *chip)
 	}
 
 	chip->aggr_enabled = enable;
+
+#ifdef OPLUS_FEATURE_CHG_BASIC
+	pm8008_read(chip->regmap, PMIC_TYPE, &val, 1);
+	if (val == PMIC_TYPE_PM8010) {
+		pm8008_read(chip->regmap, PMIC_VERSION, &val, 1);
+		if (val == PMIC_VERSION_1_0) {
+			rc = pm8008_masked_write(chip->regmap, MBG_MODE_CONTROL,
+				FORCE_MBG_OK_BIT, enable ? FORCE_MBG_OK_BIT : 0);
+			if (rc < 0) {
+				pm8008_err(chip, "Failed to write 0x2c44 register rc=%d\n", rc);
+				return rc;
+			}
+
+			while (enable && retry_count--) {
+				usleep_range(10000, 10000 + 100); //10ms
+
+				rc = pm8008_read(chip->regmap, MBG_STATUS, &val, 1);
+				if (rc < 0) {
+					pm8008_err(chip, "failed to read MGB_OK status rc=%d\n", rc);
+					break;
+				}
+				if (val & 0x80) {
+					pm8008_debug(chip, "MBG status is OK\n");
+					break;
+				}
+			}
+		}
+	}
+#endif
+
 	pm8008_debug(chip, "chip %s\n", enable ? "enabled" : "disabled");
 
 	return 0;
@@ -413,6 +458,10 @@ static int pm8008_regulator_enable(struct regulator_dev *rdev)
 			pm8008_debug(pm8008_reg, "regulator enabled\n");
 			return 0;
 		}
+#ifdef OPLUS_FEATURE_CHG_BASIC
+		else
+			pm8008_masked_write(pm8008_reg->regmap, LDO_ENABLE_REG(pm8008_reg->base), 0x80, 0x80);
+#endif
 	}
 
 	pm8008_err(pm8008_reg, "failed to enable regulator, VREG_READY not set\n");
@@ -657,7 +706,7 @@ error:
 	return NOTIFY_OK;
 }
 
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 static int pm8008_regulator_register_init(struct pm8008_regulator *pm8008_reg,
 					  const struct regulator_data *reg_data)
 {
@@ -685,14 +734,14 @@ static int pm8008_register_ldo(struct pm8008_regulator *pm8008_reg,
 	struct regulator_init_data *init_data;
 	struct device *dev = pm8008_reg->dev;
 	struct device_node *reg_node = pm8008_reg->of_node;
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 	const struct regulator_data *reg_data;
 #endif
 	int rc, i, init_voltage, is_enabled;
 	u32 base = 0;
 	u8 reg;
 
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 	reg_data = pm8008_reg->pmic_subtype == PM8008_SUBTYPE ? pm8008_reg_data
 							      : pm8010_reg_data;
 #endif
@@ -714,7 +763,7 @@ static int pm8008_register_ldo(struct pm8008_regulator *pm8008_reg,
 	}
 	pm8008_reg->base = base;
 
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 	rc = pm8008_regulator_register_init(pm8008_reg, &reg_data[i]);
 	if (rc)
 		return rc;
@@ -750,7 +799,7 @@ static int pm8008_register_ldo(struct pm8008_regulator *pm8008_reg,
 	}
 
 	/* get slew rate */
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 	if (pm8008_reg->pmic_subtype == PM8008_SUBTYPE) {
 		rc = pm8008_read(pm8008_reg->regmap,
 				LDO_STEPPER_CTL_REG(pm8008_reg->base), &reg, 1);
@@ -848,7 +897,7 @@ static int pm8008_register_ldo(struct pm8008_regulator *pm8008_reg,
 			return rc;
 		}
 	}
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 /*
 	rc = devm_regulator_debug_register(dev, pm8008_reg->rdev);
 	if (rc)
@@ -860,7 +909,7 @@ static int pm8008_register_ldo(struct pm8008_regulator *pm8008_reg,
 	return 0;
 }
 
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 static const struct of_device_id pm8008_regulator_match_table[] = {
 	{
 		.compatible	= "qcom,pm8008-regulator",
@@ -883,13 +932,15 @@ static int pm8008_parse_regulator(struct regmap *regmap, struct device *dev)
 	struct pm8008_regulator *pm8008_reg;
 	struct regulator *en_supply;
 	struct pm8008_chip *chip;
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 	const struct of_device_id *match;
 	enum pmic_subtype pmic_subtype;
+	u8 leica2_2_aon_trim = 0;
+	u8 leica2_2_revid_tp_rev = 0;
 #endif
 	bool ocp;
 
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 	match = of_match_node(pm8008_regulator_match_table, dev->of_node);
 	if (match) {
 		pmic_subtype = (uintptr_t)match->data;
@@ -904,7 +955,7 @@ static int pm8008_parse_regulator(struct regmap *regmap, struct device *dev)
 	en_supply = devm_regulator_get(dev, "pm8008_en");
 	if (IS_ERR(en_supply)) {
 		rc = PTR_ERR(en_supply);
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 		if (rc != -EPROBE_DEFER)
 #endif
 			dev_err(dev, "failed to get pm8008_en supply\n");
@@ -917,6 +968,68 @@ static int pm8008_parse_regulator(struct regmap *regmap, struct device *dev)
 		return -ENODATA;
 	}
 
+#ifdef OPLUS_FEATURE_CHG_BASIC
+	if(pmic_subtype == PM8010_SUBTYPE) {
+		rc = pm8008_masked_write(regmap, 0x2c45,
+			0xFF, 0x35);
+		if (rc < 0) {
+			pr_err("Failed to write 0x2c45 register rc=%d\n",
+				rc);
+			return rc;
+		}
+		rc = pm8008_masked_write(regmap, 0x2C53,
+			0xFF, 0x85);
+		if (rc < 0) {
+			pr_err("Failed to write 0x2C53 register rc=%d\n",
+				rc);
+			return rc;
+		}
+		rc = pm8008_masked_write(regmap, 0x2C50,
+			0xFF, 0x14);
+		if (rc < 0) {
+			pr_err("Failed to write 0x2C50 register rc=%d\n",
+				rc);
+			return rc;
+		}
+		rc = pm8008_masked_write(regmap, 0x4654,
+			0xFF, 0x5);
+		if (rc < 0) {
+			pr_err("Failed to write 0x4654 register rc=%d\n",
+				rc);
+			return rc;
+		}
+
+		rc = pm8008_read(regmap, CLK_LEICA2_LFRC_AON_TRIM, &leica2_2_aon_trim, 1);
+		if (rc < 0) {
+			pr_err("Failed to read 0x51F2 register rc=%d\n",
+				rc);
+			return rc;
+		} else {
+			pr_err("read 0x51F2 register = %d\n",
+				leica2_2_aon_trim);
+		}
+
+		rc = pm8008_read(regmap,  REVID_TP_REV, &leica2_2_revid_tp_rev, 1);
+		if (rc < 0) {
+			pr_err("Failed to read 0x1F1 register rc=%d\n",
+				rc);
+			return rc;
+		} else {
+			pr_err("read 0x1F1 register = %d\n",
+				leica2_2_revid_tp_rev);
+		}
+
+		if((leica2_2_aon_trim > 0xF) && (leica2_2_revid_tp_rev < 0x1A))
+		{
+			rc = pm8008_masked_write(regmap, CLK_LEICA2_LFRC_AON_TRIM, 0xFF, 0x7);
+			if (rc < 0) {
+				pr_err("Failed to write 0x51F2 register rc=%d\n",
+					rc);
+				return rc;
+			}
+		}
+	}
+#endif
 	/* parse each subnode and register regulator for regulator child */
 	for_each_available_child_of_node(dev->of_node, child) {
 		pm8008_reg = devm_kzalloc(dev, sizeof(*pm8008_reg), GFP_KERNEL);
@@ -929,7 +1042,7 @@ static int pm8008_parse_regulator(struct regmap *regmap, struct device *dev)
 		pm8008_reg->enable_ocp_broadcast = ocp;
 		pm8008_reg->en_supply = en_supply;
 		pm8008_reg->chip = chip;
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 		pm8008_reg->pmic_subtype = pmic_subtype;
 #endif
 
@@ -1068,7 +1181,7 @@ static int pm8008_chip_init_regulator(struct pm8008_chip *chip)
 		chip->rdev = NULL;
 		return rc;
 	}
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 /*
 	rc = devm_regulator_debug_register(chip->dev, chip->rdev);
 	if (rc)
@@ -1175,7 +1288,7 @@ static int pm8008_chip_resume(struct device *dev)
 }
 #endif
 
-#ifdef CONFIG_OPLUS_FEATURE_CHG_BASIC
+#ifdef OPLUS_FEATURE_CHG_BASIC
 /*
 static const struct of_device_id pm8008_regulator_match_table[] = {
 	{

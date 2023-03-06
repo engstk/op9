@@ -29,11 +29,11 @@ int oplus_kevent_fb_str(fb_tag tag_id, const char *event_id, unsigned char *str)
 #else
 struct kernel_packet_info
 {
-	int type;	 /* 0:root,1:only string,other number represent other type */
-	char log_tag[32];	/* logTag */
-	char event_id[20];	  /*eventID */
-	size_t payload_length;	  /* Length of packet data */
-	unsigned char payload[0];	/* Optional packet data */
+    int type;	 /* 0:root,1:only string,other number represent other type */
+    char log_tag[32];	/* logTag */
+    char event_id[20];	  /*eventID */
+    size_t payload_length;	  /* Length of packet data */
+    unsigned char payload[0];	/* Optional packet data */
 }__attribute__((packed));
 
 int oplus_kevent_fb(fb_tag tag_id, const char *event_id, unsigned char *payload);
@@ -43,4 +43,4 @@ int oplus_kevent_fb_str(fb_tag tag_id, const char *event_id, unsigned char *str)
 #pragma GCC diagnostic ignored "-Wunused-function"
 int fb_kevent_send_to_user(struct kernel_packet_info *userinfo);
 #pragma GCC diagnostic pop
-#endif /* __KERNEL_FEEDBACK_H */
+#endif

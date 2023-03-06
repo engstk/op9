@@ -188,9 +188,7 @@ struct va_macro_priv {
 	bool clk_div_switch;
 	int dec_mode[VA_MACRO_NUM_DECIMATORS];
 	u16 current_clk_id;
-	#ifdef OPLUS_BUG_STABILITY
 	int pcm_rate[VA_MACRO_NUM_DECIMATORS];
-	#endif /* OPLUS_BUG_STABILITY */
 	bool dev_up;
 };
 
@@ -915,7 +913,6 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 				hpf_cut_off_freq << 5);
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 					      0x03, 0x02);
-		#ifdef OPLUS_BUG_STABILITY
 		/* Add delay between toggle hpf gate based on sample rate */
 		switch (va_priv->pcm_rate[hpf_work->decimator]) {
 		case 0:
@@ -939,10 +936,6 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 		default:
 			usleep_range(125, 130);
 		}
-		#else /* OPLUS_BUG_STABILITY */
-		/* Minimum 1 clk cycle delay is required as per HW spec */
-		usleep_range(1000, 1010);
-		#endif /* OPLUS_BUG_STABILITY */
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 					      0x03, 0x01);
 	} else {
@@ -1187,9 +1180,7 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	u8 hpf_cut_off_freq;
 	u16 adc_mux_reg = 0;
 	u16 adc_mux0_reg = 0;
-	#ifdef OPLUS_BUG_STABILITY
 	u16 tx_fs_reg = 0;
-	#endif /* OPLUS_BUG_STABILITY */
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 	int hpf_delay = BOLERO_CDC_VA_TX_DMIC_HPF_DELAY_MS;
@@ -1215,12 +1206,10 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
 	adc_mux0_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
 				VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-	#ifdef OPLUS_BUG_STABILITY
 	tx_fs_reg = BOLERO_CDC_VA_TX0_TX_PATH_CTL +
 				VA_MACRO_TX_PATH_OFFSET * decimator;
 	va_priv->pcm_rate[decimator] = (snd_soc_component_read32(component,
 				tx_fs_reg) & 0x0F);
-	#endif /* OPLUS_BUG_STABILITY */
 
 	if(!is_smic_enabled(component, decimator))
 		va_macro_enable_dmic(w, kcontrol, event, adc_mux0_reg);

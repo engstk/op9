@@ -268,9 +268,12 @@ ifeq ($(KERNEL_BUILD), 1)
 	obj-y	+= wcd938x/
 	obj-y	+= bolero/
 	obj-y	+= wsa883x/
-#ifdef OPLUS_ARCH_EXTENDS
+#ifdef VENDOR_EDIT
 ifdef CONFIG_SND_SOC_TFA98XX
 	obj-y	+= tfa98xx-v6/
+endif
+ifdef CONFIG_SND_SOC_SIA81XX
+	obj-y	+= sia81xx/
 endif
 #endif
 	obj-y	+= rouleur/

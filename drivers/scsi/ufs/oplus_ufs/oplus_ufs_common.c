@@ -1,9 +1,12 @@
 /**********************************************************************************
-* Copyright (c), 2008-2019 , Guangdong Oplus Mobile Comm Corp., Ltd.
-* File: oplus_ufs_common.c
+* Copyright (c), 2008-2019 , Guangdong OPLUS Mobile Comm Corp., Ltd.
+* VENDOR_EDIT
+* File: ufs-oplus.c
 * Description: UFS GKI
 * Version: 1.0
 * Date: 2020-08-12
+* ------------------------------ Revision History: --------------------------------
+* <version>           <date>                <author>                            <desc>
 ***********************************************************************************/
 
 #include <linux/module.h>
@@ -58,6 +61,7 @@ static inline bool oplus_ufs_bio_has_data(struct bio *bio)
 
 void ufs_latency_hist_handle(void *data, struct ufs_hba *hba , struct ufshcd_lrb *lrbp)
 {
+#if defined(CONFIG_TRACING) && defined(DEBUG)
 	if(lrbp->cmd->request){
 		u_int64_t delta_us = ktime_us_delta(lrbp->compl_time_stamp, lrbp->issue_time_stamp);
 
@@ -68,7 +72,7 @@ void ufs_latency_hist_handle(void *data, struct ufs_hba *hba , struct ufshcd_lrb
 					lrbp->cmd->sdb.length);
 		}
 	}
-		
+#endif
 	return;
 }
 
@@ -94,3 +98,4 @@ device_initcall(oplus_ufs_common_init);
 
 MODULE_DESCRIPTION("OPLUS ufs driver common");
 MODULE_LICENSE("GPL v2");
+MODULE_AUTHOR("Tianwen");

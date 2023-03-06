@@ -38,7 +38,7 @@ bool is_rx_ic_available(struct oplus_wls_chg_rx *wls_rx)
 {
 	struct device_node *node = wls_rx->dev->of_node;
 
-	if (wls_rx->rx_ic == NULL)
+	if(wls_rx->rx_ic == NULL)
 		wls_rx->rx_ic = of_get_oplus_chg_ic(node, "oplus,rx_ic");
 	return !!wls_rx->rx_ic;
 }
@@ -88,7 +88,7 @@ int oplus_chg_wls_rx_get_vout(struct oplus_wls_chg_rx *wls_rx, int *vol_mv)
 }
 
 int oplus_chg_wls_get_cep_check_update(struct oplus_wls_chg_rx *wls_rx,
-				       int *cep)
+					      int *cep)
 {
 	struct oplus_chg_ic_dev *rx_ic;
 	struct oplus_chg_ic_rx_ops *rx_ic_ops;
@@ -139,8 +139,7 @@ int oplus_chg_wls_get_cep(struct oplus_wls_chg_rx *wls_rx, int *cep)
 static void oplus_chg_wls_cep_check_work(struct work_struct *work)
 {
 	struct delayed_work *dwork = to_delayed_work(work);
-	struct oplus_wls_chg_rx *wls_rx =
-		container_of(dwork, struct oplus_wls_chg_rx, cep_check_work);
+	struct oplus_wls_chg_rx *wls_rx = container_of(dwork, struct oplus_wls_chg_rx, cep_check_work);
 	int rc;
 	int cep;
 
@@ -164,8 +163,7 @@ out:
 	schedule_delayed_work(&wls_rx->cep_check_work, msecs_to_jiffies(100));
 }
 
-int oplus_chg_wls_rx_set_vout_ms(struct oplus_wls_chg_rx *wls_rx, int vol_mv,
-				 int wait_time_ms)
+int oplus_chg_wls_rx_set_vout_ms(struct oplus_wls_chg_rx *wls_rx, int vol_mv, int wait_time_ms)
 {
 	struct oplus_chg_ic_dev *rx_ic;
 	struct oplus_chg_ic_rx_ops *rx_ic_ops;
@@ -191,10 +189,8 @@ int oplus_chg_wls_rx_set_vout_ms(struct oplus_wls_chg_rx *wls_rx, int vol_mv,
 	(void)oplus_chg_wls_get_cep_check_update(wls_rx, &cep);
 	if (wait_time_ms > 0) {
 		reinit_completion(&wls_rx->cep_ok_ack);
-		schedule_delayed_work(&wls_rx->cep_check_work,
-				      msecs_to_jiffies(100));
-		rc = wait_for_completion_timeout(
-			&wls_rx->cep_ok_ack, msecs_to_jiffies(wait_time_ms));
+		schedule_delayed_work(&wls_rx->cep_check_work, msecs_to_jiffies(100));
+		rc = wait_for_completion_timeout(&wls_rx->cep_ok_ack, msecs_to_jiffies(wait_time_ms));
 		if (!rc) {
 			pr_err("wait cep timeout\n");
 			cancel_delayed_work_sync(&wls_rx->cep_check_work);
@@ -204,8 +200,7 @@ int oplus_chg_wls_rx_set_vout_ms(struct oplus_wls_chg_rx *wls_rx, int vol_mv,
 			return -EINVAL;
 	} else if (wait_time_ms < 0) {
 		reinit_completion(&wls_rx->cep_ok_ack);
-		schedule_delayed_work(&wls_rx->cep_check_work,
-				      msecs_to_jiffies(100));
+		schedule_delayed_work(&wls_rx->cep_check_work, msecs_to_jiffies(100));
 		wait_for_completion(&wls_rx->cep_ok_ack);
 		if (wls_rx->clean_source)
 			return -EINVAL;
@@ -214,8 +209,7 @@ int oplus_chg_wls_rx_set_vout_ms(struct oplus_wls_chg_rx *wls_rx, int vol_mv,
 	return 0;
 }
 
-int oplus_chg_wls_rx_set_vout(struct oplus_wls_chg_rx *wls_rx, int vol_mv,
-			      int wait_time_s)
+int oplus_chg_wls_rx_set_vout(struct oplus_wls_chg_rx *wls_rx, int vol_mv, int wait_time_s)
 {
 	unsigned long wait_time_ms;
 	int rc;
@@ -232,9 +226,8 @@ int oplus_chg_wls_rx_set_vout(struct oplus_wls_chg_rx *wls_rx, int vol_mv,
 	return 0;
 }
 
-int oplus_chg_wls_rx_set_vout_step(struct oplus_wls_chg_rx *wls_rx,
-				   int target_vol_mv, int step_mv,
-				   int wait_time_s)
+int oplus_chg_wls_rx_set_vout_step(struct oplus_wls_chg_rx *wls_rx, int target_vol_mv,
+				   int step_mv, int wait_time_s)
 {
 	int next_step_mv;
 	unsigned long remaining_time_ms;
@@ -264,8 +257,7 @@ next_step:
 		if (next_step_mv < target_vol_mv)
 			next_step_mv = target_vol_mv;
 	}
-	rc = oplus_chg_wls_rx_set_vout_ms(wls_rx, next_step_mv,
-					  no_timeout ? -1 : remaining_time_ms);
+	rc = oplus_chg_wls_rx_set_vout_ms(wls_rx, next_step_mv, no_timeout ? -1 : remaining_time_ms);
 	if (rc < 0) {
 		pr_err("can't set vout to %dmV, rc=%d\n", next_step_mv, rc);
 		return rc;
@@ -273,13 +265,10 @@ next_step:
 	if (next_step_mv != target_vol_mv) {
 		if (!no_timeout) {
 			if (time_is_before_jiffies(stop_time)) {
-				pr_err("can't set vout to %dmV\n",
-				       next_step_mv);
+				pr_err("can't set vout to %dmV\n", next_step_mv);
 				return -ETIMEDOUT;
 			}
-			remaining_time_ms =
-				remaining_time_ms -
-				jiffies_to_msecs(jiffies - start_time);
+			remaining_time_ms = remaining_time_ms - jiffies_to_msecs(jiffies - start_time);
 			start_time = jiffies;
 		}
 		goto next_step;
@@ -378,8 +367,7 @@ int oplus_chg_wls_rx_get_work_freq(struct oplus_wls_chg_rx *wls_rx, int *freq)
 	return rc;
 }
 
-int oplus_chg_wls_rx_get_rx_mode(struct oplus_wls_chg_rx *wls_rx,
-				 enum oplus_chg_wls_rx_mode *rx_mode)
+int oplus_chg_wls_rx_get_rx_mode(struct oplus_wls_chg_rx *wls_rx, enum oplus_chg_wls_rx_mode *rx_mode)
 {
 	struct oplus_chg_ic_dev *rx_ic;
 	struct oplus_chg_ic_rx_ops *rx_ic_ops;
@@ -487,8 +475,7 @@ int oplus_chg_wls_rx_send_match_q(struct oplus_wls_chg_rx *wls_rx, u8 data)
 	return rc;
 }
 
-int oplus_chg_wls_rx_set_fod_parm(struct oplus_wls_chg_rx *wls_rx, u8 buf[],
-				  int len)
+int oplus_chg_wls_rx_set_fod_parm(struct oplus_wls_chg_rx *wls_rx, u8 buf[], int len)
 {
 	struct oplus_chg_ic_dev *rx_ic;
 	struct oplus_chg_ic_rx_ops *rx_ic_ops;
@@ -521,12 +508,11 @@ bool oplus_chg_wls_rx_is_connected(struct oplus_wls_chg_rx *wls_rx)
 	return rx_ic_ops->rx_is_connected(rx_ic);
 }
 
-int oplus_chg_wls_rx_send_msg(struct oplus_wls_chg_rx *wls_rx,
-			      unsigned char msg, unsigned char data)
+int oplus_chg_wls_rx_send_msg(struct oplus_wls_chg_rx *wls_rx, unsigned char msg, unsigned char data)
 {
 	struct oplus_chg_ic_dev *rx_ic;
 	struct oplus_chg_ic_rx_ops *rx_ic_ops;
-	unsigned char buf[4] = { msg, ~msg, data, ~data };
+	unsigned char buf[4] = {msg, ~msg, data, ~data};
 	int rc;
 
 	if (!is_rx_ic_available(wls_rx)) {
@@ -542,8 +528,8 @@ int oplus_chg_wls_rx_send_msg(struct oplus_wls_chg_rx *wls_rx,
 	return rc;
 }
 
-int oplus_chg_wls_rx_send_data(struct oplus_wls_chg_rx *wls_rx,
-			       unsigned char msg, unsigned char data[], int len)
+int oplus_chg_wls_rx_send_data(struct oplus_wls_chg_rx *wls_rx, unsigned char msg,
+			       unsigned char data[], int len)
 {
 	struct oplus_chg_ic_dev *rx_ic;
 	struct oplus_chg_ic_rx_ops *rx_ic_ops;
@@ -571,7 +557,7 @@ int oplus_chg_wls_rx_send_data(struct oplus_wls_chg_rx *wls_rx,
 
 int oplus_chg_wls_rx_register_msg_callback(struct oplus_wls_chg_rx *wls_rx,
 					   void *dev_data,
-					   void (*call_back)(void *, u8[]))
+					   void (*call_back)(void *, u8 []))
 {
 	struct oplus_chg_ic_dev *rx_ic;
 	struct oplus_chg_ic_rx_ops *rx_ic_ops;
@@ -611,9 +597,8 @@ int oplus_chg_wls_rx_upgrade_firmware_by_img(struct oplus_wls_chg_rx *wls_rx)
 	rx_ic_ops = rx_ic->dev_ops;
 	__pm_stay_awake(wls_rx->update_fw_wake_lock);
 	wls_rx->wls_dev->wls_status.fw_upgrading = true;
-	rc = rx_ic_ops->rx_get_fw_version_by_buf(
-		oplus_wls_firmware->wls_chg_firmware,
-		oplus_wls_firmware->fw_size, &new_version);
+	rc = rx_ic_ops->rx_get_fw_version_by_buf(oplus_wls_firmware->wls_chg_firmware,
+					 oplus_wls_firmware->fw_size, &new_version);
 	if (rc < 0) {
 		pr_err("can't get fw version by img, rc=%d\n", rc);
 		goto out;
@@ -623,12 +608,10 @@ int oplus_chg_wls_rx_upgrade_firmware_by_img(struct oplus_wls_chg_rx *wls_rx)
 		pr_err("can't get fw version by chip, rc=%d\n", rc);
 		goto out;
 	}
-	pr_info("rx new_version=0x%08x, old_version=0x%08x\n", new_version,
-		old_version);
+	pr_info("rx new_version=0x%08x, old_version=0x%08x\n", new_version, old_version);
 	if (new_version != old_version) {
-		rc = rx_ic_ops->rx_upgrade_firmware_by_img(
-			rx_ic, oplus_wls_firmware->wls_chg_firmware,
-			oplus_wls_firmware->fw_size);
+		rc = rx_ic_ops->rx_upgrade_firmware_by_img(rx_ic,
+					oplus_wls_firmware->wls_chg_firmware, oplus_wls_firmware->fw_size);
 		if (rc < 0) {
 			pr_err("can't upgrade firmware by img, rc=%d\n", rc);
 			goto out;
@@ -700,9 +683,8 @@ int oplus_chg_wls_rx_get_version_by_img(struct oplus_wls_chg_rx *wls_rx,
 	rx_ic = wls_rx->rx_ic;
 	rx_ic_ops = rx_ic->dev_ops;
 
-	rc = rx_ic_ops->rx_get_fw_version_by_buf(
-		oplus_wls_firmware->wls_chg_firmware,
-		oplus_wls_firmware->fw_size, version);
+	rc = rx_ic_ops->rx_get_fw_version_by_buf(oplus_wls_firmware->wls_chg_firmware,
+					 oplus_wls_firmware->fw_size, version);
 	if (rc < 0)
 		pr_err("can't get fw version by img, rc=%d\n", rc);
 
@@ -774,8 +756,7 @@ int oplus_chg_wls_rx_init(struct oplus_chg_wls *wls_dev)
 {
 	struct oplus_wls_chg_rx *wls_rx;
 	struct oplus_wls_chg_firmware *wls_firmware;
-	wls_rx = devm_kzalloc(wls_dev->dev, sizeof(struct oplus_wls_chg_rx),
-			      GFP_KERNEL);
+	wls_rx = devm_kzalloc(wls_dev->dev, sizeof(struct oplus_wls_chg_rx), GFP_KERNEL);
 	if (wls_rx == NULL) {
 		pr_err("alloc memory error\n");
 		devm_kfree(wls_dev->dev, wls_rx);
@@ -786,8 +767,8 @@ int oplus_chg_wls_rx_init(struct oplus_chg_wls *wls_dev)
 	if (wls_firmware == NULL)
 		pr_err("The wls_firmware address error!");
 	while (wls_firmware != NULL &&
-	       wls_firmware->magic0 == OPLUS_CHG_FIRMWARE_MAGIC0 &&
-	       wls_firmware->magic1 == OPLUS_CHG_FIRMWARE_MAGIC1) {
+		wls_firmware->magic0 == OPLUS_CHG_FIRMWARE_MAGIC0 &&
+		wls_firmware->magic1 == OPLUS_CHG_FIRMWARE_MAGIC1) {
 		if (!strcasecmp(wls_firmware->name, wls_dev->wls_chg_fw_name)) {
 			oplus_wls_firmware = wls_firmware;
 			pr_err("The target firmware is %s, has select the wls_firmware is %s\n",
@@ -797,21 +778,20 @@ int oplus_chg_wls_rx_init(struct oplus_chg_wls *wls_dev)
 		wls_firmware++;
 	}
 
-	if (oplus_wls_firmware == NULL) {
+	if(oplus_wls_firmware == NULL){
 		pr_err("No wireless firmware available to match\n");
 		devm_kfree(wls_dev->dev, wls_rx);
 		return -EFAULT;
 	}
 
+
 	wls_dev->wls_rx = wls_rx;
 	wls_rx->dev = wls_dev->dev;
 	wls_rx->wls_dev = wls_dev;
 
-	INIT_DELAYED_WORK(&wls_rx->cep_check_work,
-			  oplus_chg_wls_cep_check_work);
+	INIT_DELAYED_WORK(&wls_rx->cep_check_work, oplus_chg_wls_cep_check_work);
 	init_completion(&wls_rx->cep_ok_ack);
-	wls_rx->update_fw_wake_lock =
-		wakeup_source_register(wls_rx->dev, "wls_update_lock");
+	wls_rx->update_fw_wake_lock = wakeup_source_register(wls_rx->dev, "wls_update_lock");
 
 	return 0;
 }

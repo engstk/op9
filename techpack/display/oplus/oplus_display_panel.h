@@ -4,7 +4,6 @@
 ** Description : oplus display panel char dev  /dev/oplus_panel
 ** Version : 1.0
 ** Date : 2020/06/13
-** Author : Li.Sheng@MULTIMEDIA.DISPLAY.LCD
 **
 ** ------------------------------- Revision History: -----------
 **  <author>        <data>        <version >        <desc>
@@ -78,6 +77,11 @@ struct panel_ioctl_desc {
 	const char *name;
 };
 
+struct kernel_loglevel {
+	unsigned int enable;
+	unsigned int log_level;
+};
+
 struct softiris_color
 {
 	uint32_t color_vivid_status; //[0:1] [not support:support]
@@ -89,7 +93,7 @@ struct softiris_color
 
 /*oplus ioctl case start*/
 #define PANEL_COMMOND_BASE 0x00
-#define PANEL_COMMOND_MAX  0x5D
+#define PANEL_COMMOND_MAX  0xBD
 
 #define PANEL_IOCTL_SET_POWER				  PANEL_IOW(0x01, struct panel_vol_set)
 #define PANEL_IOCTL_GET_POWER				  PANEL_IOWR(0x02, struct panel_vol_get)
@@ -138,18 +142,24 @@ struct softiris_color
 #define PANEL_IOCTL_GET_LCM_CABC              PANEL_IOWR(0x2D, unsigned int)
 #define PANEL_IOCTL_SET_AOD_AREA              PANEL_IOW(0x2E, unsigned int)
 #define PANEL_IOCTL_GET_OPLUS_MAXBRIGHTNESS   PANEL_IOWR(0x2F, unsigned int)
-
+#define PANEL_IOCTL_SET_QCOM_LOG_LEVEL        PANEL_IOW(0x30, struct kernel_loglevel)
+#define PANEL_IOCTL_SET_PANEL_ROUND_CORNER    PANEL_IOWR(0x33, unsigned int)
+#define PANEL_IOCTL_GET_PANEL_ROUND_CORNER    PANEL_IOWR(0x34, unsigned int)
 #define PANEL_IOCTL_SET_APOLLO_BACKLIGHT      PANEL_IOW(0x51, struct apollo_backlight_map_value)
 #define PANEL_IOCTL_GET_SOFTIRIS_COLOR        PANEL_IOWR(0x53, struct softiris_color)
-#define PANEL_IOCTL_SET_DITHER_STATUS        PANEL_IOWR(0x54, unsigned int)
-#define PANEL_IOCTL_GET_DITHER_STATUS        PANEL_IOWR(0x55, unsigned int)
+#define PANEL_IOCTL_SET_DITHER_STATUS         PANEL_IOWR(0x54, unsigned int)
+#define PANEL_IOCTL_GET_DITHER_STATUS         PANEL_IOWR(0x55, unsigned int)
 #define PANEL_IOCTL_SET_TE_REFCOUNT_ENABLE	  PANEL_IOW(0x56, unsigned int)
 #define PANEL_IOCTL_GET_TE_REFCOUNT_ENABLE	  PANEL_IOWR(0x57, unsigned int)
 #define PANEL_IOCTL_GET_DP_SUPPORT	          PANEL_IOWR(0x58, unsigned int)
-#define PANEL_IOCTL_SET_CABC_STATUS			PANEL_IOW(0x59, unsigned int)
-#define PANEL_IOCTL_GET_CABC_STATUS			PANEL_IOWR(0x5A, unsigned int)
-#define PANEL_IOCTL_SET_DRE_STATUS			PANEL_IOW(0x5B, unsigned int)
-#define PANEL_IOCTL_GET_DRE_STATUS			PANEL_IOWR(0x5C, unsigned int)
+#define PANEL_IOCTL_SET_CABC_STATUS           PANEL_IOW(0x59, unsigned int)
+#define PANEL_IOCTL_GET_CABC_STATUS           PANEL_IOWR(0x5A, unsigned int)
+#define PANEL_IOCTL_SET_DRE_STATUS            PANEL_IOW(0x5B, unsigned int)
+#define PANEL_IOCTL_GET_DRE_STATUS            PANEL_IOWR(0x5C, unsigned int)
+#define PANEL_IOCTL_SET_FP_TYPE               PANEL_IOW(0x64, unsigned int)
+#define PANEL_IOCTL_GET_FP_TYPE               PANEL_IOWR(0x65, unsigned int)
+#define PANEL_IOCTL_SET_SHUTDOWN_FLAG         PANEL_IOWR(0xBC, unsigned int)
+
 /*oplus ioctl case end*/
 
 int oplus_display_panel_init(void);

@@ -1036,7 +1036,8 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 
 	#ifdef OPLUS_ARCH_EXTENDS
 	if (mbhc->mbhc_cfg->enable_usbc_analog &&
-		mbhc->usbc_l_det_en == false) {
+		mbhc->usbc_l_det_en == false &&
+		mbhc->headset_detect_mode != 1) {
 		//WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MECH_DETECTION_TYPE, 1);
 		if (detection_type) {
 			dev_warn(mbhc->component->dev,
@@ -1190,7 +1191,11 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 		}
 		#endif /* OPLUS_ARCH_EXTENDS */
 
+		#ifndef OPLUS_ARCH_EXTENDS
 		if (mbhc->mbhc_cfg->enable_usbc_analog) {
+		#else
+		if (mbhc->mbhc_cfg->enable_usbc_analog && mbhc->headset_detect_mode != 1) {
+		#endif
 			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0);
 			if (mbhc->mbhc_cb->clk_setup)
 				mbhc->mbhc_cb->clk_setup(
@@ -1240,7 +1245,8 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 
 		#ifdef OPLUS_ARCH_EXTENDS
 		if (mbhc->mbhc_cfg->enable_usbc_analog && mbhc->usbc_l_det_en == true &&
-			mbhc->usbc_mode != TYPEC_ACCESSORY_AUDIO) {
+			mbhc->usbc_mode != TYPEC_ACCESSORY_AUDIO &&
+			(mbhc->headset_detect_mode != 1)) {
 			dev_info(mbhc->component->dev,
 				"%s: usbc analog audio removed, disable L_DET\n", __func__);
 			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0);
@@ -1645,7 +1651,11 @@ static int wcd_mbhc_initialise(struct wcd_mbhc *mbhc)
 	 * when a non-audio accessory is inserted. L_DET_EN sets to 1 when FSA
 	 * I2C driver notifies that ANALOG_AUDIO_ADAPTER is inserted
 	 */
+	#ifndef OPLUS_ARCH_EXTENDS
 	if (mbhc->mbhc_cfg->enable_usbc_analog)
+	#else
+	if (mbhc->mbhc_cfg->enable_usbc_analog && mbhc->headset_detect_mode != 1)
+	#endif
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0);
 	else
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 1);
@@ -1915,7 +1925,9 @@ static int wcd_mbhc_usbc_ana_event_handler(struct notifier_block *nb,
 	#ifdef OPLUS_ARCH_EXTENDS
 	} else {
 		wcd_mbhc_plug_fix_after_ssr(mbhc);
-		wcd_mbhc_usbc_ana_remove_handler(mbhc);
+		if (mbhc->headset_detect_mode != 1) {
+			wcd_mbhc_usbc_ana_remove_handler(mbhc);
+		}
 	#endif /* OPLUS_ARCH_EXTENDS */
 	}
 	return 0;
@@ -2084,6 +2096,12 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_component *component,
 	const char *mbhc_headset_micbias_alwayon = "oplus,mbhc-headset-micbias-alwayon";
 	#endif /* OPLUS_ARCH_EXTENDS */
 
+	#ifdef OPLUS_ARCH_EXTENDS
+	u32 detect_mode = 0;
+	const char *mbhc_headset_detect_mode = "oplus,mbhc-headset-detect-mode";
+	#endif /* OPLUS_ARCH_EXTENDS */
+
+
 	pr_debug("%s: enter\n", __func__);
 
 	ret = of_property_read_u32(card->dev->of_node, hph_switch, &hph_swh);
@@ -2177,6 +2195,24 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_component *component,
 		}
 	}
 	#endif /* OPLUS_ARCH_EXTENDS */
+
+	#ifdef OPLUS_ARCH_EXTENDS
+	ret = of_property_read_u32(card->dev->of_node, mbhc_headset_detect_mode,
+				&detect_mode);
+	if (ret) {
+		dev_info(card->dev,
+			"%s: missing %s in dt node\n", __func__, mbhc_headset_detect_mode);
+		mbhc->headset_detect_mode = 0;
+	} else {
+		dev_info(card->dev, "%s: detect_mode %d\n", __func__, detect_mode);
+		if (detect_mode) {
+			mbhc->headset_detect_mode = 1;
+		} else {
+			mbhc->headset_detect_mode = 0;
+		}
+	}
+	#endif /* OPLUS_ARCH_EXTENDS */
+
 
 	mbhc->in_swch_irq_handler = false;
 	mbhc->current_plug = MBHC_PLUG_TYPE_NONE;

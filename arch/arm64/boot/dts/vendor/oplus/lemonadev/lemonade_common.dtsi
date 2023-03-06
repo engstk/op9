@@ -668,12 +668,20 @@
 &firmware {
 		android {
 			vbmeta {
+				//#ifndef VENDOR_EDIT
 				parts = "vbmeta,boot,system,vendor,dtbo,vendor_boot";
+				//#else
+				//parts = "vbmeta,boot,system,vendor,dtbo,recovery";
+				//#endif /* VENDOR_EDIT */
 			};
 
 			fstab {
 				vendor {
+//#ifndef VENDOR_EDIT
 					fsmgr_flags = "wait,slotselect,avb";
+//#else
+					//fsmgr_flags = "wait,avb";
+//#endif /* VENDOR_EDIT */
 				};
 			};
 		};

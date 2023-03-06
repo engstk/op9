@@ -22,6 +22,9 @@
 #include "wcd-mbhc-adc.h"
 #include <asoc/wcd-mbhc-v2.h>
 #include <asoc/pdata.h>
+#ifdef OPLUS_FEATURE_MM_FEEDBACK
+#include <soc/oplus/system/oplus_mm_kevent_fb.h>
+#endif
 
 #define WCD_MBHC_ADC_HS_THRESHOLD_MV    1700
 #define WCD_MBHC_ADC_HPH_THRESHOLD_MV   75
@@ -358,6 +361,7 @@ static int wcd_check_cross_conn(struct wcd_mbhc *mbhc)
 	if (mbhc->mbhc_cb->update_cross_conn_thr)
 		mbhc->mbhc_cb->update_cross_conn_thr(mbhc);
 
+	#ifndef OPLUS_ARCH_EXTENDS
 	if (hphl_adc_res > mbhc->hphl_cross_conn_thr ||
 	    hphr_adc_res > mbhc->hphr_cross_conn_thr) {
 		plug_type = MBHC_PLUG_TYPE_GND_MIC_SWAP;
@@ -365,6 +369,17 @@ static int wcd_check_cross_conn(struct wcd_mbhc *mbhc)
 	} else {
 		pr_debug("%s: No Cross connection found\n", __func__);
 	}
+	#else
+	pr_debug("%s: hphl_adc_res = %d, hphr_adc_res = %d.\n", __func__, hphl_adc_res, hphr_adc_res);
+	if (hphl_adc_res > mbhc->hphl_cross_conn_thr / 2 ||
+	    hphr_adc_res > mbhc->hphr_cross_conn_thr / 2) {
+		plug_type = MBHC_PLUG_TYPE_GND_MIC_SWAP;
+		pr_debug("%s: Cross connection identified\n", __func__);
+	} else {
+		pr_debug("%s: No Cross connection found\n", __func__);
+	}
+	#endif /* OPLUS_ARCH_EXTENDS */
+
 
 done:
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, 0);
@@ -670,6 +685,12 @@ static void wcd_mbhc_adc_detect_plug_type(struct wcd_mbhc *mbhc)
 		mbhc->mbhc_cb->hph_pull_down_ctrl(component, false);
 
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_DETECTION_DONE, 0);
+	#ifdef OPLUS_ARCH_EXTENDS
+	/* change micbias to 1v first */
+	if (mbhc->need_cross_conn) {
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MICB2_VOUT, 0x00);
+	}
+	#endif /* OPLUS_ARCH_EXTENDS */
 
 	if (mbhc->mbhc_cb->mbhc_micbias_control) {
 		mbhc->mbhc_cb->mbhc_micbias_control(component, MIC_BIAS_2,
@@ -860,7 +881,12 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	int hph_threshold;
 	enum wcd_mbhc_plug_type plug_type_second = MBHC_PLUG_TYPE_INVALID;
 	int output_mv_second = 0;
+	bool swap_type_cnt = false;
 	#endif /* OPLUS_ARCH_EXTENDS */
+	#ifdef OPLUS_FEATURE_MM_FEEDBACK
+	int retry = 0;
+	char buf[MM_KEVENT_MAX_PAYLOAD_SIZE] = {0};
+	#endif
 
 #ifdef OPLUS_ARCH_EXTENDS
 #undef pr_debug
@@ -885,9 +911,7 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	wcd_mbhc_hs_elec_irq(mbhc, WCD_MBHC_ELEC_HS_INS, false);
 	WCD_MBHC_RSC_UNLOCK(mbhc);
 
-	#ifdef OPLUS_ARCH_EXTENDS
-	if (mbhc->need_cross_conn) {
-	#endif /* OPLUS_ARCH_EXTENDS */
+	#ifndef OPLUS_ARCH_EXTENDS
 	/* Check for cross connection */
 	do {
 		cross_conn = wcd_check_cross_conn(mbhc);
@@ -900,16 +924,47 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 			 __func__, plug_type);
 		goto correct_plug_type;
 	}
-	#ifdef OPLUS_ARCH_EXTENDS
-	} //need_cross_conn
-	#endif /* OPLUS_ARCH_EXTENDS */
+
+	output_mv = wcd_measure_adc_continuous(mbhc);
+	plug_type = wcd_mbhc_get_plug_from_adc(mbhc, output_mv);
+	#else /* OPLUS_ARCH_EXTENDS */
+	if (mbhc->need_cross_conn && mbhc->mbhc_cfg->swap_gnd_mic) {
+		/* Check for cross connection */
+		do {
+			cross_conn = wcd_check_cross_conn(mbhc);
+			try++;
+		} while (try < mbhc->swap_thr);
+
+		/* close micbias before switch gnd and mic for pop noise issue */
+		pr_debug("%s: close micbias before switch gnd and mic for pop noise issue.\n", __func__);
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MICB_CTRL, 0);
+		msleep(10);
+
+		if (cross_conn > 0) {
+			mbhc->mbhc_cfg->swap_gnd_mic(component,true);
+		}
+
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MICB2_VOUT, 0x22);
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MICB_CTRL, 1);
+		msleep(3);
+
+		try = 0;
+		while (try <= mbhc->swap_thr && cross_conn) {
+			cross_conn = wcd_check_cross_conn(mbhc);
+			try++;
+		}
+
+		if (try > mbhc->swap_thr && cross_conn > 0) {
+			pr_info("%s: it's MBHC_PLUG_TYPE_GND_MIC_SWAP.\n", __func__);
+			swap_type_cnt = true;
+		}
+	}
 
 	/* Find plug type */
 	output_mv = wcd_measure_adc_continuous(mbhc);
-	#ifdef OPLUS_ARCH_EXTENDS
 	pr_info("%s: output_mv %d\n", __func__, output_mv);
-	#endif /* OPLUS_ARCH_EXTENDS */
 	plug_type = wcd_mbhc_get_plug_from_adc(mbhc, output_mv);
+	#endif /* OPLUS_ARCH_EXTENDS */
 
 	#ifdef OPLUS_ARCH_EXTENDS
 	if (((plug_type != MBHC_PLUG_TYPE_HEADSET) ||
@@ -966,7 +1021,9 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 		#endif /* OPLUS_ARCH_EXTENDS */
 	}
 
+#ifndef OPLUS_ARCH_EXTENDS
 correct_plug_type:
+#endif /* OPLUS_ARCH_EXTENDS */
 	/*
 	 * Callback to disable BCS slow insertion detection
 	 */
@@ -1040,8 +1097,11 @@ correct_plug_type:
 			is_pa_on = mbhc->mbhc_cb->hph_pa_on_status(
 					mbhc->component);
 
+		#ifdef OPLUS_FEATURE_MM_FEEDBACK
+		retry++;
+		#endif /* OPLUS_FEATURE_MM_FEEDBACK */
 		#ifdef OPLUS_ARCH_EXTENDS
-		if (mbhc->need_cross_conn) {
+		if (mbhc->need_cross_conn && swap_type_cnt) {
 		#endif /* OPLUS_ARCH_EXTENDS */
 		if ((output_mv <= hs_threshold) &&
 		    (!is_pa_on)) {
@@ -1106,7 +1166,7 @@ correct_plug_type:
 			wrk_complete = true;
 			#ifdef OPLUS_ARCH_EXTENDS
 			high_hph_count++;
-			if ((high_hph_count == 5) && !headset_count && !headphone_count) {
+			if ((high_hph_count == HIGH_HPH_DETECT_RETRY_CNT) && !headset_count && !headphone_count) {
 				pr_info("%s: HIGH_HPH type, break loop detect\n", __func__);
 				break;
 			}
@@ -1351,6 +1411,16 @@ exit:
 		mbhc->mbhc_cb->hph_pull_down_ctrl(component, true);
 
 	mbhc->mbhc_cb->lock_sleep(mbhc, false);
+
+	#ifdef OPLUS_FEATURE_MM_FEEDBACK
+	if ((plug_type != MBHC_PLUG_TYPE_HEADSET) &&
+	    (plug_type != MBHC_PLUG_TYPE_HEADPHONE) &&
+	    !((plug_type == MBHC_PLUG_TYPE_HIGH_HPH) && (retry == HIGH_HPH_DETECT_RETRY_CNT))) {
+		scnprintf(buf, sizeof(buf) - 1, "func@@%s$$plug_type@@%d$$output_mv@@%d$$retry@@%d",
+				__func__, plug_type, output_mv, retry);
+		upload_mm_fb_kevent_to_atlas_limit(OPLUS_AUDIO_EVENTID_HEADSET_DET, buf, MM_FB_KEY_RATELIMIT_1MIN);
+	}
+	#endif /* OPLUS_FEATURE_MM_FEEDBACK */
 	pr_debug("%s: leave\n", __func__);
 }
 

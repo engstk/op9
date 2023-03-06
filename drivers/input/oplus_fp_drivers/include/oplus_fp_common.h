@@ -8,7 +8,6 @@
 **
 ** Version: 1.0
 ** Date created: 18:03:11, 23/07/2016
-** Author: Ziqing.guo@Prd.BaseDrv
 **
 ** --------------------------- Revision History: --------------------------------
 **  <author>                 <data>                        <desc>
@@ -74,7 +73,9 @@ typedef enum {
     FP_EGIS_OPTICAL_ET713 = 15,
     FP_GOODIX_3626 = 16,
     FP_FPC_1541 = 17,
-	FP_JIIOV_0302 = 23,
+    FP_SILEAD_6159 = 19,
+    FP_JIIOV_0302 = 23,
+    FP_JIIOV_0301 = 24,
     FP_UNKNOWN,
 } fp_vendor_t;
 

@@ -1,4 +1,4 @@
-
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2018-2020 Oplus. All rights reserved.
  */
@@ -22,6 +22,7 @@
 #include <linux/regulator/of_regulator.h>
 #include <linux/regulator/machine.h>
 #include <linux/rtc.h>
+//#include <soc/oplus/device_info.h>
 
 #include "oplus_charger.h"
 #include "oplus_warp.h"
@@ -68,6 +69,7 @@ void oplus_wpc_set_booster_en_val(int value)
 		return;
 	}
 }
+
 
 void oplus_wpc_set_ext1_wired_otg_en_val(int value)
 {
@@ -125,6 +127,9 @@ void oplus_wpc_set_rtx_function(bool enable)
 	}
 }
 
+
+
+
 int oplus_wpc_get_idt_en_val(void)
 {
 	return 0;
@@ -144,6 +149,8 @@ void oplus_wpc_dcin_irq_enable(bool enable)
 {
 	return;
 }
+
+
 
 bool oplus_wireless_charge_start(void)
 {
@@ -196,6 +203,8 @@ bool oplus_wpc_get_otg_charging(void)
 	}
 }
 
+
+
 bool oplus_wpc_get_ffc_charging(void)
 {
 	if (!g_wpc_chip) {
@@ -231,9 +240,11 @@ bool oplus_wpc_get_fw_updating(void)
 	}
 }
 
+
 int oplus_wpc_get_adapter_type(void)
 {
 	if (!g_wpc_chip) {
+		//chg_err("g_wpc_chip null, return\n");
 		return -EINVAL;
 	}
 	if (g_wpc_chip->wpc_ops->wpc_get_adapter_type) {
@@ -242,6 +253,7 @@ int oplus_wpc_get_adapter_type(void)
 		return 0;
 	}
 }
+
 
 void oplus_wpc_print_log(void)
 {
@@ -257,35 +269,37 @@ void oplus_wpc_print_log(void)
 	}
 }
 
+
+
 void oplus_wpc_set_wrx_en_value(int value)
 {
 	struct oplus_wpc_chip *chip = g_wpc_chip;
 	if (!chip) {
-		printk(KERN_ERR "[OPLUS_CHG][%s]: oplus_wpc_chip not ready!\n",
-		       __func__);
+		printk(KERN_ERR "[OPLUS_CHG][%s]: oplus_wpc_chip not ready!\n", __func__);
 		return;
 	}
 	if (chip->wpc_gpios.wrx_en_gpio <= 0) {
 		chg_err("wrx_en_gpio not exist, return\n");
 		return;
 	}
-	if (IS_ERR_OR_NULL(chip->wpc_gpios.pinctrl) ||
-	    IS_ERR_OR_NULL(chip->wpc_gpios.wrx_en_active) ||
-	    IS_ERR_OR_NULL(chip->wpc_gpios.wrx_en_sleep)) {
+	if (IS_ERR_OR_NULL(chip->wpc_gpios.pinctrl)
+		|| IS_ERR_OR_NULL(chip->wpc_gpios.wrx_en_active)
+		|| IS_ERR_OR_NULL(chip->wpc_gpios.wrx_en_sleep)) {
 		chg_err("pinctrl null, return\n");
 		return;
 	}
 	if (value == 1) {
 		gpio_direction_output(chip->wpc_gpios.wrx_en_gpio, 1);
 		pinctrl_select_state(chip->wpc_gpios.pinctrl,
-				     chip->wpc_gpios.wrx_en_active);
+			chip->wpc_gpios.wrx_en_active);
 	} else {
 		pinctrl_select_state(chip->wpc_gpios.pinctrl,
-				     chip->wpc_gpios.wrx_en_sleep);
+			chip->wpc_gpios.wrx_en_sleep);
 	}
-	chg_err("set value:%d, gpio_val:%d\n", value,
-		gpio_get_value(chip->wpc_gpios.wrx_en_gpio));
+	chg_err("set value:%d, gpio_val:%d\n",
+		value, gpio_get_value(chip->wpc_gpios.wrx_en_gpio));
 }
+
 
 int oplus_wpc_get_wrx_en_val(void)
 {
@@ -298,9 +312,9 @@ int oplus_wpc_get_wrx_en_val(void)
 		chg_err("wrx_en_gpio not exist, return\n");
 		return 0;
 	}
-	if (IS_ERR_OR_NULL(chip->wpc_gpios.pinctrl) ||
-	    IS_ERR_OR_NULL(chip->wpc_gpios.wrx_en_active) ||
-	    IS_ERR_OR_NULL(chip->wpc_gpios.wrx_en_sleep)) {
+	if (IS_ERR_OR_NULL(chip->wpc_gpios.pinctrl)
+		|| IS_ERR_OR_NULL(chip->wpc_gpios.wrx_en_active)
+		|| IS_ERR_OR_NULL(chip->wpc_gpios.wrx_en_sleep)) {
 		chg_err("pinctrl null, return\n");
 		return 0;
 	}
@@ -318,9 +332,9 @@ int oplus_wpc_get_wrx_otg_en_val(void)
 		chg_err("wrx_otg_en_gpio not exist, return\n");
 		return 0;
 	}
-	if (IS_ERR_OR_NULL(chip->wpc_gpios.pinctrl) ||
-	    IS_ERR_OR_NULL(chip->wpc_gpios.wrx_otg_en_active) ||
-	    IS_ERR_OR_NULL(chip->wpc_gpios.wrx_otg_en_sleep)) {
+	if (IS_ERR_OR_NULL(chip->wpc_gpios.pinctrl)
+		|| IS_ERR_OR_NULL(chip->wpc_gpios.wrx_otg_en_active)
+		|| IS_ERR_OR_NULL(chip->wpc_gpios.wrx_otg_en_sleep)) {
 		chg_err("pinctrl null, return\n");
 		return 0;
 	}
@@ -331,30 +345,29 @@ void oplus_wpc_set_wrx_otg_en_value(int value)
 {
 	struct oplus_wpc_chip *chip = g_wpc_chip;
 	if (!chip) {
-		printk(KERN_ERR "[OPLUS_CHG][%s]: oplus_wpc_chip not ready!\n",
-		       __func__);
+		printk(KERN_ERR "[OPLUS_CHG][%s]: oplus_wpc_chip not ready!\n", __func__);
 		return;
 	}
 	if (chip->wpc_gpios.wrx_otg_en_gpio <= 0) {
 		chg_err("wrx_otg_en_gpio not exist, return\n");
 		return;
 	}
-	if (IS_ERR_OR_NULL(chip->wpc_gpios.pinctrl) ||
-	    IS_ERR_OR_NULL(chip->wpc_gpios.wrx_otg_en_active) ||
-	    IS_ERR_OR_NULL(chip->wpc_gpios.wrx_otg_en_sleep)) {
+	if (IS_ERR_OR_NULL(chip->wpc_gpios.pinctrl)
+		|| IS_ERR_OR_NULL(chip->wpc_gpios.wrx_otg_en_active)
+		|| IS_ERR_OR_NULL(chip->wpc_gpios.wrx_otg_en_sleep)) {
 		chg_err("pinctrl null, return\n");
 		return;
 	}
 	if (value == 1) {
 		gpio_direction_output(chip->wpc_gpios.wrx_otg_en_gpio, 1);
 		pinctrl_select_state(chip->wpc_gpios.pinctrl,
-				     chip->wpc_gpios.wrx_otg_en_active);
+			chip->wpc_gpios.wrx_otg_en_active);
 	} else {
 		pinctrl_select_state(chip->wpc_gpios.pinctrl,
-				     chip->wpc_gpios.wrx_otg_en_sleep);
+			chip->wpc_gpios.wrx_otg_en_sleep);
 	}
-	chg_err("set value:%d, gpio_val:%d\n", value,
-		gpio_get_value(chip->wpc_gpios.wrx_otg_en_gpio));
+	chg_err("set value:%d, gpio_val:%d\n",
+		value, gpio_get_value(chip->wpc_gpios.wrx_otg_en_gpio));
 }
 
 void oplus_wpc_init(struct oplus_wpc_chip *chip)

@@ -961,6 +961,10 @@ struct msm_drm_private {
 
 	struct mutex vm_client_lock;
 	struct list_head vm_client_list;
+
+#ifdef OPLUS_BUG_STABILITY
+	struct mutex dspp_lock;
+#endif /* OPLUS_BUG_STABILITY */
 };
 
 /* get struct msm_kms * from drm_device * */

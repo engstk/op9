@@ -12,12 +12,14 @@
 /* A hardware display blank early change occurred */
 #define MSM_DRM_EARLY_EVENT_BLANK		0x02
 
-#if IS_ENABLED(CONFIG_DRM_OPLUS_NOTIFY) || IS_ENABLED(CONFIG_DRM_MSM)
-#define MSM_DRM_EVENT_FOR_TOUCH			0x03
-#endif
+#ifdef OPLUS_FEATURE_TP_BASIC
+#define MSM_DRM_EVENT_FOR_TOUCH 0x03
+#endif /* OPLUS_FEATURE_TP_BASIC */
 
+#ifdef VENDOR_EDIT
 /* event for onscreenfingerprint scene */
 #define MSM_DRM_ONSCREENFINGERPRINT_EVENT	0x10
+#endif /* VENDOR_EDIT */
 
 enum {
 	/* panel: power on */

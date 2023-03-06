@@ -1,12 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-/*
- * Copyright (C) 2018-2020 Oplus. All rights reserved.
- */
 #ifndef _OPLUS_PROJECT_H_
 #define _OPLUS_PROJECT_H_
-#include "oplus_project_data_ocdt.h"
-#include "oplus_project_oldcdt.h"
 
+#define MAX_OCP 6
+#define MAX_LEN 8
+#define FEATURE_COUNT 10
 #define ALIGN4(s) ((sizeof(s) + 3)&(~0x3))
 
 #define FEATURE1_OPEARTOR_OPEN_MASK 0000
@@ -16,8 +13,15 @@
 #define FEATURE1_OPEARTOR_CU_MASK 0100
 #define FEATURE1_OPEARTOR_MAX_MASK 1111
 
+enum {
+	OPLUS_UNKNOWN,
+};
 
-enum F_INDEX {
+enum OPLUS_OPERATOR{
+	OPERATOR_UNKOWN,
+};
+
+enum f_index {
 	IDX_1 = 1,
 	IDX_2,
 	IDX_3,
@@ -30,35 +34,79 @@ enum F_INDEX {
 	IDX_10,
 };
 
+enum PCB_VERSION {
+	PRE_EVB1 = 0,
+	PRE_EVB2,
+	EVB1,
+	EVB2,
+	T0,
+	T1,
+	T2,
+	T3,
+	EVT1,
+	EVT2,
+	EVT3,
+	EVT4,
+	DVT1,
+	DVT2,
+	DVT3,
+	DVT4,
+	PVT1,
+	PVT2,
+	PVT3,
+	MP1,
+	MP2,
+	MP3,
+	PCB_MAX,
+};
+
+enum OPLUS_ENG_VERSION {
+    RELEASE                 = 0x00,
+    AGING                   = 0x01,
+    CTA                     = 0x02,
+    PERFORMANCE             = 0x03,
+    PREVERSION              = 0x04,
+    ALL_NET_CMCC_TEST       = 0x05,
+    ALL_NET_CMCC_FIELD      = 0x06,
+    ALL_NET_CU_TEST         = 0x07,
+    ALL_NET_CU_FIELD        = 0x08,
+    ALL_NET_CT_TEST         = 0x09,
+    ALL_NET_CT_FIELD        = 0x0A,
+    HIGH_TEMP_AGING         = 0x0B,
+};
+
 struct pcb_match {
 	enum PCB_VERSION version;
 	char *str;
 };
-unsigned int get_cdt_version(void);
-unsigned int get_eng_version(void);
-unsigned int is_new_cdt(void);
-#ifdef CONFIG_OPLUS_SYSTEM_KERNEL_QCOM
-unsigned int get_serialID(void);
-#else
-void get_serialID(char *serialno);
-#endif
 
-/*cdt interface for Q or R*/
+typedef struct
+{
+	uint32_t	nVerison;
+	uint32_t	nProject;
+	uint32_t	nDtsi;
+	uint32_t	nAudio;
+	uint32_t	nRF;
+	uint32_t	nFeature[FEATURE_COUNT];
+	uint32_t	nOppoBootMode;
+	uint32_t 	nPCB;
+	uint8_t		nPmicOcp[MAX_OCP];
+	uint8_t		reserved[16]; /*reseved[0] & reserved[1] used for compability of upgrade P->Q*/
+} ProjectInfoCDTType;
+
+typedef struct
+{
+  uint32_t   version;
+  uint32_t   is_confidential;
+} EngInfoType;
+
 unsigned int get_project(void);
-unsigned int get_prj(void);
-unsigned int is_project(int project);
-unsigned int get_Oplus_Boot_Mode(void);
-unsigned int get_PCB_Version(void);
-unsigned int get_audio(void);
-unsigned int get_dtsiNo(void);
-uint32_t get_oplus_feature(enum F_INDEX index);
-
-/*cdt interface for P->R*/
+int get_PCB_Version(void);
+int get_eng_version(void);
 int32_t get_Modem_Version(void);
 int32_t get_Operator_Version(void);
-
-/*eng cdt data for P or Q or R*/
 bool is_confidential(void);
 bool oplus_daily_build(void);
+uint32_t get_oplus_feature(enum f_index index);
 
-#endif /* _OPLUS_PROJECT_H_ */
+#endif

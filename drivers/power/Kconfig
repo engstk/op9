@@ -3,6 +3,7 @@ source "drivers/power/avs/Kconfig"
 source "drivers/power/reset/Kconfig"
 source "drivers/power/supply/Kconfig"
 
+#ifdef OPLUS_FEATURE_CHG_BASIC
 config OPLUS_CHG
 	tristate "OPLUS CHARGER KO module"
 	default m
@@ -69,16 +70,5 @@ config OPLUS_SHIP_MODE_SUPPORT
 	default n
 	help
 	  Say Y to include support
-
-config OPLUS_KEVENT_UPLOAD
-	bool "OPLUS KEVENT UPLOAD"
-	default n
-	help
-	  Say Y to include support
-
-config OPLUS_FEATURE_CHG_BASIC
-	bool "OPLUS charger"
-	default n
-	help
-	  Say Y to include support
+source "drivers/power/oplus/Kconfig"
 #endif

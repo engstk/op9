@@ -882,10 +882,12 @@ static int qti_flash_led_get_voltage_headroom(
 	return voltage_hdrm_max;
 }
 
+#ifdef VENDOR_EDIT
 int __attribute__((weak)) qti_battery_charger_get_prop(const char *name, enum battery_charger_prop prop_id, int *val)
 {
     return -EINVAL;
 }
+#endif /*VENDOR_EDIT*/
 
 static int qti_flash_led_calc_max_avail_current(
 			struct qti_flash_led *led,

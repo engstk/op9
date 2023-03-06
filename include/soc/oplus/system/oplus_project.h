@@ -43,9 +43,8 @@ unsigned int get_serialID(void);
 void get_serialID(char *serialno);
 #endif
 
-/*cdt interface for Q or R*/
+//cdt interface for Q or R
 unsigned int get_project(void);
-unsigned int get_prj(void);
 unsigned int is_project(int project);
 unsigned int get_Oplus_Boot_Mode(void);
 unsigned int get_PCB_Version(void);
@@ -53,12 +52,14 @@ unsigned int get_audio(void);
 unsigned int get_dtsiNo(void);
 uint32_t get_oplus_feature(enum F_INDEX index);
 
-/*cdt interface for P->R*/
+//cdt interface for P->R
 int32_t get_Modem_Version(void);
 int32_t get_Operator_Version(void);
 
-/*eng cdt data for P or Q or R*/
+//eng cdt data for P or Q or R
 bool is_confidential(void);
 bool oplus_daily_build(void);
+bool oplus_daily_build(void);
 
-#endif /* _OPLUS_PROJECT_H_ */
+
+#endif

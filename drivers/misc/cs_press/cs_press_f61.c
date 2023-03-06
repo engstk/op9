@@ -5,7 +5,6 @@
  *
  * Description  : driver for chip sea IC
  * History      : ( ID, Date, Author, Description)
- * Author       : Cong.Dai @psw.bsp.tp
  * Data         : 2018/11/03
  ************************************************************/
 

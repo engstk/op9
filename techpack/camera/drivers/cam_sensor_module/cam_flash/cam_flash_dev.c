@@ -542,7 +542,7 @@ static int cam_flash_component_bind(struct device *dev,
 
 	fctrl->flash_state = CAM_FLASH_STATE_INIT;
 #ifdef OPLUS_FEATURE_CAMERA_COMMON
-	oplus_cam_flash_proc_init(fctrl, pdev);
+       oplus_cam_flash_proc_init(fctrl, pdev);
 #endif
 	CAM_DBG(CAM_FLASH, "Component bound successfully");
 	return rc;

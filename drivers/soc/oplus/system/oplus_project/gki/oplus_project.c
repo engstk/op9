@@ -118,7 +118,7 @@ static void init_project_version(void)
         }
 
         do {
-            if(pcb_str[index].version == g_project->ndatascdt.pcb){
+            if(pcb_str[index].version == g_project->nDataSCDT.PCB){
                 PCB_version_name = pcb_str[index].str;
                 break;
             }
@@ -126,16 +126,16 @@ static void init_project_version(void)
         }while(index < sizeof(pcb_str)/sizeof(struct pcb_match));
 
         pr_err("KE Project:%d, Audio:%d, nRF:%d, PCB:%s\n",
-            g_project->ndatabcdt.projectno,
-            g_project->ndatabcdt.audioidx,
-            g_project->ndatascdt.rf,PCB_version_name);
+            g_project->nDataBCDT.ProjectNo,
+            g_project->nDataBCDT.AudioIdx,
+            g_project->nDataSCDT.RF,PCB_version_name);
         pr_err("OCP: %d 0x%x %c %d 0x%x %c\n",
-            g_project->ndatascdt.pmicocp[0],
-            g_project->ndatascdt.pmicocp[1],
-            g_project->ndatascdt.pmicocp[2],
-            g_project->ndatascdt.pmicocp[3],
-            g_project->ndatascdt.pmicocp[4],
-            g_project->ndatascdt.pmicocp[5]);
+            g_project->nDataSCDT.PmicOcp[0],
+            g_project->nDataSCDT.PmicOcp[1],
+            g_project->nDataSCDT.PmicOcp[2],
+            g_project->nDataSCDT.PmicOcp[3],
+            g_project->nDataSCDT.PmicOcp[4],
+            g_project->nDataSCDT.PmicOcp[5]);
     }
 
     if(is_new_cdt()){
@@ -190,7 +190,7 @@ unsigned int get_project(void)
 {
     init_project_version();
 
-    return g_project? g_project->ndatabcdt.projectno : 0;
+    return g_project? g_project->nDataBCDT.ProjectNo : 0;
 }
 EXPORT_SYMBOL(get_project);
 
@@ -215,7 +215,7 @@ unsigned int get_PCB_Version(void)
 {
     init_project_version();
 
-    return g_project? g_project->ndatascdt.pcb:-EINVAL;
+    return g_project? g_project->nDataSCDT.PCB:-EINVAL;
 }
 EXPORT_SYMBOL(get_PCB_Version);
 
@@ -223,7 +223,7 @@ unsigned int get_Oplus_Boot_Mode(void)
 {
     init_project_version();
 
-    return g_project?g_project->ndatascdt.oplusbootmode:0;
+    return g_project?g_project->nDataSCDT.OplusBootMode:0;
 }
 EXPORT_SYMBOL(get_Oplus_Boot_Mode);
 
@@ -232,7 +232,7 @@ int32_t get_Modem_Version(void)
     init_project_version();
 
     /*cdt return modem,ocdt return RF*/
-    return g_project?g_project->ndatascdt.rf:-EINVAL;
+    return g_project?g_project->nDataSCDT.RF:-EINVAL;
 }
 EXPORT_SYMBOL(get_Modem_Version);
 
@@ -240,22 +240,19 @@ int32_t get_Operator_Version(void)
 {
     init_project_version();
 
-    if(!is_new_cdt())
-        return g_project?g_project->ndatascdt.operator:-EINVAL;
-    else
-        return -EINVAL;
+	return g_project?g_project->nDataSCDT.Operator:-EINVAL;
 }
 EXPORT_SYMBOL(get_Operator_Version);
 
 unsigned int get_dtsiNo(void)
 {
-    return (g_project && is_new_cdt()) ? g_project->ndatabcdt.dtsino : 0;
+    return (g_project && is_new_cdt()) ? g_project->nDataBCDT.DtsiNo : 0;
 }
 EXPORT_SYMBOL(get_dtsiNo);
 
 unsigned int get_audio(void)
 {
-    return (g_project && is_new_cdt()) ? g_project->ndatabcdt.audioidx : 0;
+    return (g_project && is_new_cdt()) ? g_project->nDataBCDT.AudioIdx : 0;
 }
 EXPORT_SYMBOL(get_audio);
 
@@ -288,7 +285,7 @@ unsigned int get_eng_version(void)
 {
     init_project_version();
 
-    return g_project?g_project->ndataecdt.version:-EINVAL;
+    return g_project?g_project->nDataECDT.Version:-EINVAL;
 }
 EXPORT_SYMBOL(get_eng_version);
 
@@ -322,7 +319,7 @@ bool is_confidential(void)
 {
     init_project_version();
 
-    return g_project?g_project->ndataecdt.is_confidential:-EINVAL;
+    return g_project?g_project->nDataECDT.Is_confidential:-EINVAL;
 }
 EXPORT_SYMBOL(is_confidential);
 
@@ -332,7 +329,7 @@ uint32_t get_oplus_feature(enum F_INDEX index)
         init_project_version();
         if (index < 1 || index > FEATURE_COUNT)
             return 0;
-        return g_project?g_project->ndatabcdt.feature[index-1]:0;
+        return g_project?g_project->nDataBCDT.Feature[index-1]:0;
     }
     else
         return 0;
@@ -357,12 +354,12 @@ static void dump_ocp_info(struct seq_file *s)
         return;
 
     seq_printf(s, "ocp: %d 0x%x %d 0x%x %c %c",
-        g_project->ndatascdt.pmicocp[0],
-        g_project->ndatascdt.pmicocp[1],
-        g_project->ndatascdt.pmicocp[2],
-        g_project->ndatascdt.pmicocp[3],
-        g_project->ndatascdt.pmicocp[4],
-        g_project->ndatascdt.pmicocp[5]);
+        g_project->nDataSCDT.PmicOcp[0],
+        g_project->nDataSCDT.PmicOcp[1],
+        g_project->nDataSCDT.PmicOcp[2],
+        g_project->nDataSCDT.PmicOcp[3],
+        g_project->nDataSCDT.PmicOcp[4],
+        g_project->nDataSCDT.PmicOcp[5]);
 }
 
 static void dump_serial_info(struct seq_file *s)
@@ -378,16 +375,16 @@ static void dump_project_test(struct seq_file *s)
 static void dump_oplus_feature(struct seq_file *s)
 {
     seq_printf(s, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
-        g_project->ndatabcdt.feature[0],
-        g_project->ndatabcdt.feature[1],
-        g_project->ndatabcdt.feature[2],
-        g_project->ndatabcdt.feature[3],
-        g_project->ndatabcdt.feature[4],
-        g_project->ndatabcdt.feature[5],
-        g_project->ndatabcdt.feature[6],
-        g_project->ndatabcdt.feature[7],
-        g_project->ndatabcdt.feature[8],
-        g_project->ndatabcdt.feature[9]);
+        g_project->nDataBCDT.Feature[0],
+        g_project->nDataBCDT.Feature[1],
+        g_project->nDataBCDT.Feature[2],
+        g_project->nDataBCDT.Feature[3],
+        g_project->nDataBCDT.Feature[4],
+        g_project->nDataBCDT.Feature[5],
+        g_project->nDataBCDT.Feature[6],
+        g_project->nDataBCDT.Feature[7],
+        g_project->nDataBCDT.Feature[8],
+        g_project->nDataBCDT.Feature[9]);
     return;
 }
 
@@ -558,7 +555,7 @@ unsigned int get_cdt_version()
 {
     init_project_version();
 
-    return g_project?g_project->version:0;
+    return g_project?g_project->Version:0;
 }
 
 static int projects_open(struct inode *inode, struct file *file)
@@ -730,4 +727,4 @@ arch_initcall(oplus_project_init);
 
 MODULE_DESCRIPTION("OPLUS project version");
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Joshua <gyx@oplus.com>");
+MODULE_AUTHOR("Joshua");

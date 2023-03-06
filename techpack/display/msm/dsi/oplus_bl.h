@@ -4,7 +4,6 @@
 ** Description : oplus display backlight
 ** Version : 1.0
 ** Date : 2020/10/23
-** Author : LiPing-M@PSW.MM.Display.Stability
 **
 ** ------------------------------- Revision History: -----------
 **  <author>        <data>        <version >        <desc>

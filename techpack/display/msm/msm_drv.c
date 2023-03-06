@@ -58,6 +58,12 @@
 #include "oplus_adfr.h"
 #endif
 
+#if defined(OPLUS_FEATURE_SCHED_ASSIST) && defined(CONFIG_OPLUS_FEATURE_SCHED_ASSIST)
+#ifdef CONFIG_OPLUS_CRTC_COMMIT_MUTEX_OPT
+#include <linux/sched_assist/sched_assist_common.h>
+#endif
+#endif /* defined(OPLUS_FEATURE_SCHED_ASSIST) && defined(CONFIG_OPLUS_FEATURE_SCHED_ASSIST) */
+
 /*
  * MSM driver version:
  * - 1.0.0 - initial interface
@@ -644,6 +650,20 @@ static int msm_drm_display_thread_create(struct sched_param param,
 			priv->disp_thread[i].thread = NULL;
 		}
 
+#if defined(OPLUS_FEATURE_SCHED_ASSIST) && defined(CONFIG_OPLUS_FEATURE_SCHED_ASSIST)
+#ifdef CONFIG_OPLUS_CRTC_COMMIT_MUTEX_OPT
+		/*
+		 * These crtc_commit core RT threads compete with CFS
+		 * thread for mutex lock and is blocked by CFS thread.
+		 * Which is a wrong usage from the scheduling point of
+		 * view, but driver side cannot be optimized in time.
+		 * So, it is optimized by using UX's mutex inheritance.
+		 */
+		if (priv->disp_thread[i].thread)
+			set_heavy_ux(priv->disp_thread[i].thread);
+#endif
+#endif /* defined(OPLUS_FEATURE_SCHED_ASSIST) && defined(CONFIG_OPLUS_FEATURE_SCHED_ASSIST) */
+
 		/* initialize event thread */
 		priv->event_thread[i].crtc_id = priv->crtcs[i]->base.id;
 		kthread_init_worker(&priv->event_thread[i].worker);
@@ -867,6 +887,10 @@ static int msm_drm_component_init(struct device *dev)
 	INIT_LIST_HEAD(&priv->vm_client_list);
 
 	mutex_init(&priv->vm_client_lock);
+
+#ifdef OPLUS_BUG_STABILITY
+	mutex_init(&priv->dspp_lock);
+#endif /* OPLUS_BUG_STABILITY */
 
 	/* Bind all our sub-components: */
 	ret = msm_component_bind_all(dev, ddev);
@@ -2276,7 +2300,6 @@ static int __init msm_drm_register(void)
 static void __exit msm_drm_unregister(void)
 {
 	DBG("fini");
-
 	platform_driver_unregister(&msm_platform_driver);
 	sde_wb_unregister();
 	msm_hdmi_unregister();

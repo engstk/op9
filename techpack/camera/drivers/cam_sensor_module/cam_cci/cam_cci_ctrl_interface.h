@@ -13,6 +13,8 @@
 #ifndef _CAM_CCI_CTRL_INTERFACE_H_
 #define _CAM_CCI_CTRL_INTERFACE_H_
 
+//#define USE_CAMERA_CCI_OVERRIDE
+
 extern int32_t cam_cci_control_interface(void*);
 
 enum camera_cci_operations {
@@ -29,4 +31,10 @@ struct camera_cci_transfer {
     uint16_t count;
 };
 
+
+
+
 #endif /* _CAM_CCI_CTRL_INTERFACE_H_ */
+
+
+

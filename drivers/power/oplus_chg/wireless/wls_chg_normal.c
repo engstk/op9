@@ -18,7 +18,7 @@ static bool is_nor_ic_available(struct oplus_wls_chg_normal *wls_nor)
 {
 	struct device_node *node = wls_nor->dev->of_node;
 
-	if (wls_nor->nor_ic == NULL)
+	if(wls_nor->nor_ic == NULL)
 		wls_nor->nor_ic = of_get_oplus_chg_ic(node, "oplus,normal_ic");
 	return !!wls_nor->nor_ic;
 }
@@ -30,8 +30,7 @@ static bool is_batt_ocm_available(struct oplus_wls_chg_normal *wls_nor)
 	return !!wls_nor->batt_ocm;
 }
 
-__maybe_unused static bool
-is_usb_ocm_available(struct oplus_wls_chg_normal *wls_nor)
+__maybe_unused static bool is_usb_ocm_available(struct oplus_wls_chg_normal *wls_nor)
 {
 	struct oplus_chg_wls *wls_dev = wls_nor->wls_dev;
 	if (wls_dev->usb_ocm)
@@ -39,8 +38,7 @@ is_usb_ocm_available(struct oplus_wls_chg_normal *wls_nor)
 	return !!wls_dev->usb_ocm;
 }
 
-__maybe_unused static bool
-oplus_chg_is_usb_present(struct oplus_wls_chg_normal *wls_nor)
+__maybe_unused static bool oplus_chg_is_usb_present(struct oplus_wls_chg_normal *wls_nor)
 {
 	struct oplus_chg_wls *wls_dev = wls_nor->wls_dev;
 	union oplus_chg_mod_propval pval;
@@ -51,12 +49,10 @@ oplus_chg_is_usb_present(struct oplus_wls_chg_normal *wls_nor)
 		pr_err("usb_ocm not found\n");
 		return false;
 	}
-	rc = oplus_chg_mod_get_property(wls_dev->usb_ocm,
-					OPLUS_CHG_PROP_PRESENT, &pval);
+	rc = oplus_chg_mod_get_property(wls_dev->usb_ocm, OPLUS_CHG_PROP_PRESENT, &pval);
 	if (rc == 0)
 		present = !!pval.intval;
-	rc = oplus_chg_mod_get_property(wls_dev->usb_ocm, OPLUS_CHG_PROP_ONLINE,
-					&pval);
+	rc = oplus_chg_mod_get_property(wls_dev->usb_ocm, OPLUS_CHG_PROP_ONLINE, &pval);
 	if (rc == 0)
 		present |= !!pval.intval;
 
@@ -72,16 +68,14 @@ static int get_batt_cell_num(struct oplus_wls_chg_normal *wls_nor)
 		pr_err("batt ocm not found\n");
 		return 1;
 	}
-	rc = oplus_chg_mod_get_property(wls_nor->batt_ocm,
-					OPLUS_CHG_PROP_CELL_NUM, &pval);
+	rc = oplus_chg_mod_get_property(wls_nor->batt_ocm, OPLUS_CHG_PROP_CELL_NUM, &pval);
 	if (rc < 0)
 		return 1;
 
 	return pval.intval;
 }
 
-int oplus_chg_wls_nor_set_input_enable(struct oplus_wls_chg_normal *wls_nor,
-				       bool en)
+int oplus_chg_wls_nor_set_input_enable(struct oplus_wls_chg_normal *wls_nor, bool en)
 {
 	struct oplus_chg_ic_dev *nor_ic;
 	struct oplus_chg_ic_buck_ops *nor_ic_ops;
@@ -103,8 +97,7 @@ int oplus_chg_wls_nor_set_input_enable(struct oplus_wls_chg_normal *wls_nor,
 	return rc;
 }
 
-int oplus_chg_wls_nor_set_output_enable(struct oplus_wls_chg_normal *wls_nor,
-					bool en)
+int oplus_chg_wls_nor_set_output_enable(struct oplus_wls_chg_normal *wls_nor, bool en)
 {
 	struct oplus_chg_ic_dev *nor_ic;
 	struct oplus_chg_ic_buck_ops *nor_ic_ops;
@@ -155,7 +148,7 @@ int oplus_chg_wls_nor_set_icl(struct oplus_wls_chg_normal *wls_nor, int icl_ma)
 		mutex_unlock(&wls_nor->icl_lock);
 		return rc;
 	}
-
+	
 	wls_nor->icl_set_ma = icl_ma;
 	mutex_unlock(&wls_nor->icl_lock);
 
@@ -165,8 +158,7 @@ int oplus_chg_wls_nor_set_icl(struct oplus_wls_chg_normal *wls_nor, int icl_ma)
 static void oplus_chg_wls_nor_icl_set_work(struct work_struct *work)
 {
 	struct delayed_work *dwork = to_delayed_work(work);
-	struct oplus_wls_chg_normal *wls_nor =
-		container_of(dwork, struct oplus_wls_chg_normal, icl_set_work);
+	struct oplus_wls_chg_normal *wls_nor = container_of(dwork, struct oplus_wls_chg_normal, icl_set_work);
 	int icl_next_ma;
 	int rc;
 
@@ -195,14 +187,12 @@ static void oplus_chg_wls_nor_icl_set_work(struct work_struct *work)
 		if (!wls_nor->wls_dev->wls_status.rx_present) {
 			return;
 		}
-		schedule_delayed_work(&wls_nor->icl_set_work,
-				      msecs_to_jiffies(100));
+		schedule_delayed_work(&wls_nor->icl_set_work, msecs_to_jiffies(100));
 		return;
 	}
 }
 
-int oplus_chg_wls_nor_set_icl_by_step(struct oplus_wls_chg_normal *wls_nor,
-				      int icl_ma, int step_ma, bool block)
+int oplus_chg_wls_nor_set_icl_by_step(struct oplus_wls_chg_normal *wls_nor, int icl_ma, int step_ma, bool block)
 {
 	struct oplus_chg_ic_dev *nor_ic;
 	int icl_next_ma;
@@ -223,7 +213,7 @@ int oplus_chg_wls_nor_set_icl_by_step(struct oplus_wls_chg_normal *wls_nor,
 		wls_nor->icl_target_ma = icl_ma;
 		wls_nor->icl_step_ma = step_ma;
 		mutex_unlock(&wls_nor->icl_lock);
-	next_step:
+next_step:
 		mutex_lock(&wls_nor->icl_lock);
 		if (icl_ma >= wls_nor->icl_set_ma) {
 			icl_next_ma = wls_nor->icl_set_ma + step_ma;
@@ -237,8 +227,7 @@ int oplus_chg_wls_nor_set_icl_by_step(struct oplus_wls_chg_normal *wls_nor,
 		mutex_unlock(&wls_nor->icl_lock);
 		rc = oplus_chg_wls_nor_set_icl(wls_nor, icl_next_ma);
 		if (rc < 0) {
-			pr_err("set icl to %d mA error, rc=%d\n", icl_next_ma,
-			       rc);
+			pr_err("set icl to %d mA error, rc=%d\n", icl_next_ma, rc);
 			return rc;
 		}
 		if (wls_nor->clean_source) {
@@ -296,8 +285,7 @@ int oplus_chg_wls_nor_set_fcc(struct oplus_wls_chg_normal *wls_nor, int fcc_ma)
 static void oplus_chg_wls_nor_fcc_set_work(struct work_struct *work)
 {
 	struct delayed_work *dwork = to_delayed_work(work);
-	struct oplus_wls_chg_normal *wls_nor =
-		container_of(dwork, struct oplus_wls_chg_normal, fcc_set_work);
+	struct oplus_wls_chg_normal *wls_nor = container_of(dwork, struct oplus_wls_chg_normal, fcc_set_work);
 	int fcc_next_ma;
 	int rc;
 
@@ -326,14 +314,12 @@ static void oplus_chg_wls_nor_fcc_set_work(struct work_struct *work)
 		if (!wls_nor->wls_dev->wls_status.rx_present) {
 			return;
 		}
-		schedule_delayed_work(&wls_nor->fcc_set_work,
-				      msecs_to_jiffies(100));
+		schedule_delayed_work(&wls_nor->fcc_set_work, msecs_to_jiffies(100));
 		return;
 	}
 }
 
-int oplus_chg_wls_nor_set_fcc_by_step(struct oplus_wls_chg_normal *wls_nor,
-				      int fcc_ma, int step_ma, bool block)
+int oplus_chg_wls_nor_set_fcc_by_step(struct oplus_wls_chg_normal *wls_nor, int fcc_ma, int step_ma, bool block)
 {
 	struct oplus_chg_ic_dev *nor_ic;
 	int fcc_next_ma;
@@ -354,7 +340,7 @@ int oplus_chg_wls_nor_set_fcc_by_step(struct oplus_wls_chg_normal *wls_nor,
 		wls_nor->fcc_target_ma = fcc_ma;
 		wls_nor->fcc_step_ma = step_ma;
 		mutex_unlock(&wls_nor->fcc_lock);
-	next_step:
+next_step:
 		mutex_lock(&wls_nor->fcc_lock);
 		if (fcc_ma >= wls_nor->fcc_set_ma) {
 			fcc_next_ma = wls_nor->fcc_set_ma + step_ma;
@@ -368,8 +354,7 @@ int oplus_chg_wls_nor_set_fcc_by_step(struct oplus_wls_chg_normal *wls_nor,
 		mutex_unlock(&wls_nor->fcc_lock);
 		rc = oplus_chg_wls_nor_set_fcc(wls_nor, fcc_next_ma);
 		if (rc < 0) {
-			pr_err("set fcc to %d mA error, rc=%d\n", fcc_next_ma,
-			       rc);
+			pr_err("set fcc to %d mA error, rc=%d\n", fcc_next_ma, rc);
 			return rc;
 		}
 		if (wls_nor->clean_source) {
@@ -418,8 +403,7 @@ int oplus_chg_wls_nor_set_fv(struct oplus_wls_chg_normal *wls_nor, int fv_mv)
 	return 0;
 }
 
-int oplus_chg_wls_nor_set_rechg_vol(struct oplus_wls_chg_normal *wls_nor,
-				    int rechg_vol_mv)
+int oplus_chg_wls_nor_set_rechg_vol(struct oplus_wls_chg_normal *wls_nor, int rechg_vol_mv)
 {
 	struct oplus_chg_ic_dev *nor_ic;
 	struct oplus_chg_ic_buck_ops *nor_ic_ops;
@@ -440,8 +424,7 @@ int oplus_chg_wls_nor_set_rechg_vol(struct oplus_wls_chg_normal *wls_nor,
 		return 0;
 	rc = nor_ic_ops->chg_set_rechg_vol(nor_ic, rechg_vol_mv);
 	if (rc < 0) {
-		pr_err("set rechg_vol to %d mV error, rc=%d\n", rechg_vol_mv,
-		       rc);
+		pr_err("set rechg_vol to %d mV error, rc=%d\n", rechg_vol_mv, rc);
 		return rc;
 	}
 
@@ -474,8 +457,7 @@ int oplus_chg_wls_nor_get_icl(struct oplus_wls_chg_normal *wls_nor, int *icl_ma)
 	return 0;
 }
 
-int oplus_chg_wls_nor_get_input_curr(struct oplus_wls_chg_normal *wls_nor,
-				     int *curr_ma)
+int oplus_chg_wls_nor_get_input_curr(struct oplus_wls_chg_normal *wls_nor, int *curr_ma)
 {
 	struct oplus_chg_ic_dev *nor_ic;
 	struct oplus_chg_ic_buck_ops *nor_ic_ops;
@@ -501,8 +483,7 @@ int oplus_chg_wls_nor_get_input_curr(struct oplus_wls_chg_normal *wls_nor,
 	return 0;
 }
 
-int oplus_chg_wls_nor_get_input_vol(struct oplus_wls_chg_normal *wls_nor,
-				    int *vol_mv)
+int oplus_chg_wls_nor_get_input_vol(struct oplus_wls_chg_normal *wls_nor, int *vol_mv)
 {
 	struct oplus_chg_ic_dev *nor_ic;
 	struct oplus_chg_ic_buck_ops *nor_ic_ops;
@@ -528,8 +509,7 @@ int oplus_chg_wls_nor_get_input_vol(struct oplus_wls_chg_normal *wls_nor,
 	return 0;
 }
 
-int oplus_chg_wls_nor_set_boost_en(struct oplus_wls_chg_normal *wls_nor,
-				   bool en)
+int oplus_chg_wls_nor_set_boost_en(struct oplus_wls_chg_normal *wls_nor, bool en)
 {
 	struct oplus_chg_ic_dev *nor_ic;
 	struct oplus_chg_ic_buck_ops *nor_ic_ops;
@@ -548,16 +528,14 @@ int oplus_chg_wls_nor_set_boost_en(struct oplus_wls_chg_normal *wls_nor,
 	nor_ic_ops = nor_ic->dev_ops;
 	rc = nor_ic_ops->chg_set_boost_en(nor_ic, en);
 	if (rc < 0) {
-		pr_err("set boost %s error, rc=%d\n", en ? "enable" : "disable",
-		       rc);
+		pr_err("set boost %s error, rc=%d\n", en ? "enable" : "disable", rc);
 		return rc;
 	}
 
 	return 0;
 }
 
-int oplus_chg_wls_nor_set_boost_vol(struct oplus_wls_chg_normal *wls_nor,
-				    int vol_mv)
+int oplus_chg_wls_nor_set_boost_vol(struct oplus_wls_chg_normal *wls_nor, int vol_mv)
 {
 	struct oplus_chg_ic_dev *nor_ic;
 	struct oplus_chg_ic_buck_ops *nor_ic_ops;
@@ -585,8 +563,7 @@ int oplus_chg_wls_nor_set_boost_vol(struct oplus_wls_chg_normal *wls_nor,
 	return 0;
 }
 
-int oplus_chg_wls_nor_set_boost_curr_limit(struct oplus_wls_chg_normal *wls_nor,
-					   int curr_ma)
+int oplus_chg_wls_nor_set_boost_curr_limit(struct oplus_wls_chg_normal *wls_nor, int curr_ma)
 {
 	struct oplus_chg_ic_dev *nor_ic;
 	struct oplus_chg_ic_buck_ops *nor_ic_ops;
@@ -614,8 +591,7 @@ int oplus_chg_wls_nor_set_boost_curr_limit(struct oplus_wls_chg_normal *wls_nor,
 	return 0;
 }
 
-int oplus_chg_wls_nor_set_aicl_enable(struct oplus_wls_chg_normal *wls_nor,
-				      bool en)
+int oplus_chg_wls_nor_set_aicl_enable(struct oplus_wls_chg_normal *wls_nor, bool en)
 {
 	struct oplus_chg_ic_dev *nor_ic;
 	struct oplus_chg_ic_buck_ops *nor_ic_ops;
@@ -700,8 +676,7 @@ int oplus_chg_wls_nor_init(struct oplus_chg_wls *wls_dev)
 {
 	struct oplus_wls_chg_normal *wls_nor;
 
-	wls_nor = devm_kzalloc(wls_dev->dev,
-			       sizeof(struct oplus_wls_chg_normal), GFP_KERNEL);
+	wls_nor = devm_kzalloc(wls_dev->dev, sizeof(struct oplus_wls_chg_normal), GFP_KERNEL);
 	if (wls_nor == NULL) {
 		pr_err("alloc memory error\n");
 		return -ENOMEM;
@@ -710,10 +685,8 @@ int oplus_chg_wls_nor_init(struct oplus_chg_wls *wls_dev)
 	wls_nor->dev = wls_dev->dev;
 	wls_nor->wls_dev = wls_dev;
 
-	INIT_DELAYED_WORK(&wls_nor->icl_set_work,
-			  oplus_chg_wls_nor_icl_set_work);
-	INIT_DELAYED_WORK(&wls_nor->fcc_set_work,
-			  oplus_chg_wls_nor_fcc_set_work);
+	INIT_DELAYED_WORK(&wls_nor->icl_set_work, oplus_chg_wls_nor_icl_set_work);
+	INIT_DELAYED_WORK(&wls_nor->fcc_set_work, oplus_chg_wls_nor_fcc_set_work);
 	mutex_init(&wls_nor->icl_lock);
 	mutex_init(&wls_nor->fcc_lock);
 

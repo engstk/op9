@@ -33,7 +33,7 @@ static struct device_type oplus_chg_dev_type;
 static DEFINE_MUTEX(mod_list_lock);
 static LIST_HEAD(mod_list);
 
-#define OPLUS_CHG_DEFERRED_REGISTER_TIME msecs_to_jiffies(10)
+#define OPLUS_CHG_DEFERRED_REGISTER_TIME	msecs_to_jiffies(10)
 
 #ifdef MODULE
 static oplus_chg_module_register_null(oplus_chg_core);
@@ -68,8 +68,8 @@ static struct oplus_chg_module *oplus_chg_find_last_module(void)
 static void oplus_chg_mod_changed_work(struct work_struct *work)
 {
 	unsigned long flags;
-	struct oplus_chg_mod *ocm =
-		container_of(work, struct oplus_chg_mod, changed_work);
+	struct oplus_chg_mod *ocm = container_of(work, struct oplus_chg_mod,
+						changed_work);
 
 	dev_dbg(&ocm->dev, "%s\n", __func__);
 
@@ -85,8 +85,8 @@ static void oplus_chg_mod_changed_work(struct work_struct *work)
 		ocm->changed = false;
 		spin_unlock_irqrestore(&ocm->changed_lock, flags);
 		atomic_notifier_call_chain(&oplus_chg_changed_notifier,
-					   OPLUS_CHG_EVENT_CHANGED, ocm);
-
+				OPLUS_CHG_EVENT_CHANGED, ocm);
+		//kobject_uevent(&ocm->dev.kobj, KOBJ_CHANGE);
 		spin_lock_irqsave(&ocm->changed_lock, flags);
 	}
 
@@ -117,7 +117,7 @@ EXPORT_SYMBOL_GPL(oplus_chg_mod_changed);
 static void oplus_chg_mod_deferred_register_work(struct work_struct *work)
 {
 	struct oplus_chg_mod *ocm = container_of(work, struct oplus_chg_mod,
-						 deferred_register_work.work);
+						deferred_register_work.work);
 
 	if (ocm->dev.parent) {
 		while (!mutex_trylock(&ocm->dev.parent->mutex)) {
@@ -149,7 +149,7 @@ struct oplus_chg_mod *oplus_chg_mod_get_by_name(const char *name)
 	struct oplus_chg_mod *ocm = NULL;
 
 	mutex_lock(&mod_list_lock);
-	list_for_each_entry (ocm, &mod_list, list) {
+	list_for_each_entry(ocm, &mod_list, list) {
 		if (ocm->desc->name == NULL)
 			continue;
 		if (strcmp(ocm->desc->name, name) == 0) {
@@ -180,8 +180,8 @@ void oplus_chg_mod_put(struct oplus_chg_mod *ocm)
 EXPORT_SYMBOL_GPL(oplus_chg_mod_put);
 
 int oplus_chg_mod_get_property(struct oplus_chg_mod *ocm,
-			       enum oplus_chg_mod_property ocm_prop,
-			       union oplus_chg_mod_propval *val)
+			    enum oplus_chg_mod_property ocm_prop,
+			    union oplus_chg_mod_propval *val)
 {
 	if (atomic_read(&ocm->use_cnt) <= 0 || ocm_prop >= OPLUS_CHG_PROP_MAX) {
 		if (!ocm->initialized)
@@ -194,8 +194,8 @@ int oplus_chg_mod_get_property(struct oplus_chg_mod *ocm,
 EXPORT_SYMBOL_GPL(oplus_chg_mod_get_property);
 
 int oplus_chg_mod_set_property(struct oplus_chg_mod *ocm,
-			       enum oplus_chg_mod_property ocm_prop,
-			       const union oplus_chg_mod_propval *val)
+			    enum oplus_chg_mod_property ocm_prop,
+			    const union oplus_chg_mod_propval *val)
 {
 	if (atomic_read(&ocm->use_cnt) <= 0 || !ocm->desc->set_property ||
 	    ocm_prop >= OPLUS_CHG_PROP_MAX)
@@ -209,7 +209,7 @@ int oplus_chg_mod_property_is_writeable(struct oplus_chg_mod *ocm,
 					enum oplus_chg_mod_property ocm_prop)
 {
 	if (atomic_read(&ocm->use_cnt) <= 0 ||
-	    !ocm->desc->property_is_writeable)
+			!ocm->desc->property_is_writeable)
 		return -ENODEV;
 
 	return ocm->desc->property_is_writeable(ocm, ocm_prop);
@@ -280,10 +280,10 @@ void oplus_chg_unreg_mod_notifier(struct oplus_chg_mod *ocm,
 EXPORT_SYMBOL_GPL(oplus_chg_unreg_mod_notifier);
 
 void oplus_chg_global_event(struct oplus_chg_mod *owner_ocm,
-			    enum oplus_chg_event events)
+				enum oplus_chg_event events)
 {
-	atomic_notifier_call_chain(&oplus_chg_event_notifier, events,
-				   owner_ocm);
+	atomic_notifier_call_chain(&oplus_chg_event_notifier,
+				   events, owner_ocm);
 }
 EXPORT_SYMBOL_GPL(oplus_chg_global_event);
 
@@ -294,11 +294,11 @@ int oplus_chg_mod_event(struct oplus_chg_mod *ocm_receive,
 	if (ocm_receive == NULL)
 		return -ENODEV;
 	if (ocm_receive->notifier == NULL) {
-		pr_err("%s mod not support notifier\n",
-		       ocm_receive->desc->name);
+		pr_err("%s mod not support notifier\n", ocm_receive->desc->name);
 		return -EINVAL;
 	}
-	atomic_notifier_call_chain(ocm_receive->notifier, events, ocm_send);
+	atomic_notifier_call_chain(ocm_receive->notifier,
+				   events, ocm_send);
 
 	return 0;
 }
@@ -306,24 +306,26 @@ EXPORT_SYMBOL_GPL(oplus_chg_mod_event);
 
 /* anonymous message */
 int oplus_chg_anon_mod_event(struct oplus_chg_mod *ocm_receive,
-			     enum oplus_chg_event events)
+			enum oplus_chg_event events)
 {
 	if (ocm_receive == NULL)
 		return -ENODEV;
 	if (ocm_receive->notifier == NULL) {
-		pr_err("%s mod not support notifier\n",
-		       ocm_receive->desc->name);
+		pr_err("%s mod not support notifier\n", ocm_receive->desc->name);
 		return -EINVAL;
 	}
-	atomic_notifier_call_chain(ocm_receive->notifier, events, NULL);
+	atomic_notifier_call_chain(ocm_receive->notifier,
+				   events, NULL);
 
 	return 0;
 }
 EXPORT_SYMBOL_GPL(oplus_chg_anon_mod_event);
 
-static struct oplus_chg_mod *__must_check __oplus_chg_mod_register(
-	struct device *parent, const struct oplus_chg_mod_desc *desc,
-	const struct oplus_chg_mod_config *cfg, bool ws)
+static struct oplus_chg_mod *__must_check
+__oplus_chg_mod_register(struct device *parent,
+				   const struct oplus_chg_mod_desc *desc,
+				   const struct oplus_chg_mod_config *cfg,
+				   bool ws)
 {
 	struct device *dev;
 	struct oplus_chg_mod *ocm;
@@ -378,7 +380,7 @@ static struct oplus_chg_mod *__must_check __oplus_chg_mod_register(
 		goto wakeup_init_failed;
 
 	mutex_lock(&mod_list_lock);
-	list_for_each_entry (ocm_temp, &mod_list, list) {
+	list_for_each_entry(ocm_temp, &mod_list, list) {
 		if (ocm_temp->desc->name == NULL)
 			continue;
 		if (strcmp(ocm_temp->desc->name, ocm->desc->name) == 0) {
@@ -409,9 +411,9 @@ dev_set_name_failed:
 	return ERR_PTR(rc);
 }
 
-struct oplus_chg_mod *__must_check oplus_chg_mod_register(
-	struct device *parent, const struct oplus_chg_mod_desc *desc,
-	const struct oplus_chg_mod_config *cfg)
+struct oplus_chg_mod *__must_check oplus_chg_mod_register(struct device *parent,
+		const struct oplus_chg_mod_desc *desc,
+		const struct oplus_chg_mod_config *cfg)
 {
 	return __oplus_chg_mod_register(parent, desc, cfg, true);
 }
@@ -431,9 +433,10 @@ EXPORT_SYMBOL_GPL(oplus_chg_mod_register);
  * Use oplus_chg_mod_unregister() on returned oplus_chg_mod pointer to release
  * resources.
  */
-struct oplus_chg_mod *__must_check oplus_chg_mod_register_no_ws(
-	struct device *parent, const struct oplus_chg_mod_desc *desc,
-	const struct oplus_chg_mod_config *cfg)
+struct oplus_chg_mod *__must_check
+oplus_chg_mod_register_no_ws(struct device *parent,
+		const struct oplus_chg_mod_desc *desc,
+		const struct oplus_chg_mod_config *cfg)
 {
 	return __oplus_chg_mod_register(parent, desc, cfg, false);
 }
@@ -460,14 +463,14 @@ static void devm_oplus_chg_mod_release(struct device *dev, void *res)
  * The returned oplus_chg_mod pointer will be automatically unregistered
  * on driver detach.
  */
-struct oplus_chg_mod *__must_check devm_oplus_chg_mod_register(
-	struct device *parent, const struct oplus_chg_mod_desc *desc,
-	const struct oplus_chg_mod_config *cfg)
+struct oplus_chg_mod *__must_check
+devm_oplus_chg_mod_register(struct device *parent,
+		const struct oplus_chg_mod_desc *desc,
+		const struct oplus_chg_mod_config *cfg)
 {
 	struct oplus_chg_mod **ptr, *ocm;
 
-	ptr = devres_alloc(devm_oplus_chg_mod_release, sizeof(*ptr),
-			   GFP_KERNEL);
+	ptr = devres_alloc(devm_oplus_chg_mod_release, sizeof(*ptr), GFP_KERNEL);
 
 	if (!ptr)
 		return ERR_PTR(-ENOMEM);
@@ -496,14 +499,14 @@ EXPORT_SYMBOL_GPL(devm_oplus_chg_mod_register);
  * The returned oplus_chg_mod pointer will be automatically unregistered
  * on driver detach.
  */
-struct oplus_chg_mod *__must_check devm_oplus_chg_mod_register_no_ws(
-	struct device *parent, const struct oplus_chg_mod_desc *desc,
-	const struct oplus_chg_mod_config *cfg)
+struct oplus_chg_mod *__must_check
+devm_oplus_chg_mod_register_no_ws(struct device *parent,
+		const struct oplus_chg_mod_desc *desc,
+		const struct oplus_chg_mod_config *cfg)
 {
 	struct oplus_chg_mod **ptr, *ocm;
 
-	ptr = devres_alloc(devm_oplus_chg_mod_release, sizeof(*ptr),
-			   GFP_KERNEL);
+	ptr = devres_alloc(devm_oplus_chg_mod_release, sizeof(*ptr), GFP_KERNEL);
 
 	if (!ptr)
 		return ERR_PTR(-ENOMEM);
@@ -570,8 +573,7 @@ static int __init oplus_chg_class_init(void)
 		if (oplus_module->chg_module_init != NULL) {
 			rc = oplus_module->chg_module_init();
 			if (rc < 0) {
-				pr_err("%s init error, rc=%d\n",
-				       oplus_module->name, rc);
+				pr_err("%s init error, rc=%d\n", oplus_module->name, rc);
 				oplus_module--;
 				goto module_init_err;
 			}

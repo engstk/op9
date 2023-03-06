@@ -1,15 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-/**************************************************************
-* Copyright (c)  2008- 2020  Oplus. All rights reserved.
-* File       : oplus_kevent.h
-* Description: For kevent action upload upload to user layer
-* Version   : 1.0
-* Date        : 2019-12-19
-* Author    :
-* TAG         :
-****************************************************************/
-#ifndef __LINUX_OPLUS_KEVENT_H
-#define __LINUX_OPLUS_KEVENT_H
+/*
+ * oplus_kevent.h - for kevent action upload upload to user layer
+ *  author by wangzhenhua,Plf.Framework
+ */
 
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -24,7 +16,7 @@
 #include <net/sock.h>
 #include <linux/version.h>
 
-#ifdef CONFIG_OPLUS_KEVENT_UPLOAD
+//#ifdef CONFIG_OPLUS_KEVENT_UPLOAD
 
 #define NETLINK_OPLUS_KEVENT 34
 
@@ -39,9 +31,9 @@ struct kernel_packet_info
 
 int kevent_send_to_user(struct kernel_packet_info *userinfo);
 void kernel_kevent_receive(struct sk_buff *__skbbr);
-#endif /* CONFIG_OPLUS_KEVENT_UPLOAD */
+//#endif /* CONFIG_OPLUS_KEVENT_UPLOAD */
 
-#ifdef CONFIG_OPLUS_KEVENT_TEST
+//#ifdef CONFIG_OPLUS_KEVENT_TEST
 ssize_t demo_kevent_write(struct file *filp, const char __user *buffer, size_t count, loff_t *f_pos);
-#endif /* CONFIG_OPLUS_KEVENT_TEST */
-#endif /* __LINUX_OPLUS_KEVENT_H */
+//#endif /* CONFIG_OPLUS_KEVENT_TEST */
+

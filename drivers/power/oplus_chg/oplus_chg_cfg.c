@@ -1,4 +1,4 @@
-
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2017, 2019 The Linux Foundation. All rights reserved.
  */
@@ -12,6 +12,8 @@
 #include "oplus_chg_comm.h"
 #include "oplus_chg_wls.h"
 #include "oplus_chg_cfg.h"
+
+// static char *public_key = "zrZiJ1+Mvphg+OHdttQCChLilekc0h4Wm7gsdqA4vXbFxguexN8Zo9eU2wK/N83H6yMrZi8R+c+vmKBn6wzTe02PIYgp82RxI/z8kIyb4zsc4zJ1oMN6RAxTjKAAZliUIMGA2oSua2SXHMwB3/dftTw1lBoHP4Cwb7I8LtmSDO0";
 
 struct sdesc {
 	struct shash_desc shash;
@@ -68,36 +70,24 @@ int oplus_chg_check_cfg_data(void *buf)
 	    cfg_head->head_size != sizeof(struct oplus_chg_cfg_head)) {
 		return -EINVAL;
 	}
-	param_head = (struct oplus_chg_param_head
-			      *)((unsigned char *)buf +
-				 cfg_head->param_index[OPLUS_CHG_USB_PARAM]);
+	param_head = (struct oplus_chg_param_head *)((unsigned char *)buf + cfg_head->param_index[OPLUS_CHG_USB_PARAM]);
 	if (param_head->size != 0) {
-		pr_err("usb charge parameter length error, len=%d\n",
-		       param_head->size);
+		pr_err("usb charge parameter length error, len=%d\n", param_head->size);
 		return -EINVAL;
 	}
-	param_head = (struct oplus_chg_param_head
-			      *)((unsigned char *)buf +
-				 cfg_head->param_index[OPLUS_CHG_WLS_PARAM]);
+	param_head = (struct oplus_chg_param_head *)((unsigned char *)buf + cfg_head->param_index[OPLUS_CHG_WLS_PARAM]);
 	if (param_head->size != sizeof(struct oplus_chg_wls_dynamic_config)) {
-		pr_err("wireless charge parameter length error, len=%d\n",
-		       param_head->size);
+		pr_err("wireless charge parameter length error, len=%d\n", param_head->size);
 		return -EINVAL;
 	}
-	param_head = (struct oplus_chg_param_head
-			      *)((unsigned char *)buf +
-				 cfg_head->param_index[OPLUS_CHG_COMM_PARAM]);
+	param_head = (struct oplus_chg_param_head *)((unsigned char *)buf + cfg_head->param_index[OPLUS_CHG_COMM_PARAM]);
 	if (param_head->size != sizeof(struct oplus_chg_comm_config)) {
-		pr_err("common parameter length error, len=%d\n",
-		       param_head->size);
+		pr_err("common parameter length error, len=%d\n", param_head->size);
 		return -EINVAL;
 	}
-	param_head = (struct oplus_chg_param_head
-			      *)((unsigned char *)buf +
-				 cfg_head->param_index[OPLUS_CHG_BATT_PARAM]);
+	param_head = (struct oplus_chg_param_head *)((unsigned char *)buf + cfg_head->param_index[OPLUS_CHG_BATT_PARAM]);
 	if (param_head->size != 0) {
-		pr_err("battery parameter length error, len=%d\n",
-		       param_head->size);
+		pr_err("battery parameter length error, len=%d\n", param_head->size);
 		return -EINVAL;
 	}
 
@@ -106,8 +96,7 @@ int oplus_chg_check_cfg_data(void *buf)
 		pr_info("can't alloc alg %s\n", hash_alg_name);
 		return PTR_ERR(alg);
 	}
-	rc = calc_hash(alg, (unsigned char *)buf + cfg_head->head_size,
-		       cfg_head->size, digest);
+	rc = calc_hash(alg, (unsigned char *)buf + cfg_head->head_size, cfg_head->size, digest);
 
 	crypto_free_shash(alg);
 
@@ -120,9 +109,7 @@ void *oplus_chg_get_param(void *buf, enum oplus_chg_param_type type)
 	struct oplus_chg_param_head *param_head;
 
 	cfg_head = (struct oplus_chg_cfg_head *)buf;
-	param_head =
-		(struct oplus_chg_param_head *)((unsigned char *)buf +
-						cfg_head->param_index[type]);
+	param_head = (struct oplus_chg_param_head *)((unsigned char *)buf + cfg_head->param_index[type]);
 
 	if (param_head->magic != OPLUS_CHG_CFG_MAGIC)
 		return NULL;
@@ -134,30 +121,25 @@ void *oplus_chg_get_param(void *buf, enum oplus_chg_param_type type)
 	switch (type) {
 	case OPLUS_CHG_USB_PARAM:
 		if (param_head->size != 0) {
-			pr_err("usb charge parameter length error, len=%d\n",
-			       param_head->size);
+			pr_err("usb charge parameter length error, len=%d\n", param_head->size);
 			return NULL;
 		}
 		break;
 	case OPLUS_CHG_WLS_PARAM:
-		if (param_head->size !=
-		    sizeof(struct oplus_chg_wls_dynamic_config)) {
-			pr_err("wireless charge parameter length error, len=%d\n",
-			       param_head->size);
+		if (param_head->size != sizeof(struct oplus_chg_wls_dynamic_config)) {
+			pr_err("wireless charge parameter length error, len=%d\n", param_head->size);
 			return NULL;
 		}
 		break;
 	case OPLUS_CHG_COMM_PARAM:
 		if (param_head->size != sizeof(struct oplus_chg_comm_config)) {
-			pr_err("common parameter length error, len=%d\n",
-			       param_head->size);
+			pr_err("common parameter length error, len=%d\n", param_head->size);
 			return NULL;
 		}
 		break;
 	case OPLUS_CHG_BATT_PARAM:
 		if (param_head->size != 0) {
-			pr_err("battery parameter length error, len=%d\n",
-			       param_head->size);
+			pr_err("battery parameter length error, len=%d\n", param_head->size);
 			return NULL;
 		}
 		break;

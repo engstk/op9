@@ -22,10 +22,10 @@ static bool mm_fb_init = false;
 #define CAUSENAME_SIZE 128
 static char fid[CAUSENAME_SIZE]={"12345678"};
 
-#define LIMIT_UPLOAD_TIME_MS    10000/*ms*/
+#define LIMIT_UPLOAD_TIME_MS    10000//ms
 struct limit_upload_frq {
-	unsigned int last_id;
-	ktime_t last_time;
+    unsigned int last_id;
+    ktime_t last_time;
 };
 static struct limit_upload_frq g_limit;
 
@@ -48,9 +48,9 @@ struct mm_kevent {
 
 static unsigned int BKDRHash(char *str, unsigned int len)
 {
-	unsigned int seed = 131; /* 31 131 1313 13131 131313 etc.. */
+	unsigned int seed = 131; // 31 131 1313 13131 131313 etc.. 
 	unsigned int hash = 0;
-	unsigned int i	= 0;
+	unsigned int i    = 0;
 
 	if (str == NULL) {
 		return 0;
@@ -84,7 +84,7 @@ static void calc_fid(unsigned char *str)
 static int upload_mm_fb_kevent(unsigned int event_id, unsigned char *payload) {
 	struct mm_kevent_packet *user_msg_info;
 	char event_id_str[MAX_PAYLOAD_EVENTID] = {0};
-	void *buffer = NULL;
+	void* buffer = NULL;
 	int len, size;
 	int ret = 0;
 
@@ -94,7 +94,7 @@ static int upload_mm_fb_kevent(unsigned int event_id, unsigned char *payload) {
 	len = strlen(payload);
 	if (len > MAX_PAYLOAD_DATASIZE) {
 		printk(KERN_INFO "%s: error: payload len=%d > %d\n",
-				__func__, len, MAX_PAYLOAD_DATASIZE);
+		        __func__, len, MAX_PAYLOAD_DATASIZE);
 		ret = -1;
 		goto _exit;
 	}
@@ -239,19 +239,19 @@ static void mm_fb_kevent_upload_jobs(struct work_struct *work)
 	}
 }
 
-static void mm_fb_kevent_upload_recv_user(int type, int flags, char *data) {
+static void mm_fb_kevent_upload_recv_user(int type, int flags, char* data) {
 	printk(KERN_INFO "mm_kevent fb recv user type=0x%x, flags=0x%x, data=%s\n",
 		type, flags, data);
-	#ifdef OPLUS_NETLINK_MM_KEVENT_TEST
-	if (flags & OPLUS_NETLINK_MM_DBG_LV2) {
-		upload_mm_fb_kevent(OPLUS_MM_EVENTID_TEST_OR_DEBUG, data);
-	}
-	#endif
+    #ifdef OPLUS_NETLINK_MM_KEVENT_TEST
+    if (flags & OPLUS_NETLINK_MM_DBG_LV2) {
+        upload_mm_fb_kevent(OPLUS_MM_EVENTID_TEST_OR_DEBUG, data);
+    }
+    #endif
 }
 
 /* queue a  delaywork to upload the feedback info, can used in interrupt function or timeliness requirement place*/
 int upload_mm_fb_kevent_limit(enum OPLUS_MM_DIRVER_FB_EVENT_MODULE module, unsigned int event_id,
-			 const char *name, int rate_limit_ms, char *payload)
+		     const char *name, int rate_limit_ms, char *payload)
 {
 	struct mm_kevent *kevent = NULL;
 	int size;
@@ -297,7 +297,7 @@ int upload_mm_fb_kevent_to_atlas_limit(unsigned int event_id, unsigned char *pay
 {
 	struct mm_kevent_packet *user_msg_info;
 	char event_id_str[MAX_PAYLOAD_EVENTID] = {0};
-	void *buffer = NULL;
+	void* buffer = NULL;
 	int len, size;
 	int ret = 0;
 
@@ -345,8 +345,9 @@ int upload_mm_fb_kevent_to_atlas_limit(unsigned int event_id, unsigned char *pay
 	memcpy(user_msg_info->data, payload, len + 1);
 
 	pr_info("%s: mm_kevent: type %d, tag=%s, event_id=%s, len=%zu, payload=%s\n", __func__,
-			 user_msg_info->type, user_msg_info->tag, user_msg_info->event_id, user_msg_info->len, user_msg_info->data);
+	         user_msg_info->type, user_msg_info->tag, user_msg_info->event_id, user_msg_info->len, user_msg_info->data);
 	mm_fb_kevent_send_to_user(user_msg_info);
+	//msleep(20);
 	kfree(buffer);
 	g_limit.last_id = event_id;
 	g_limit.last_time = ktime_get();
@@ -358,7 +359,7 @@ _exit:
 EXPORT_SYMBOL(upload_mm_fb_kevent_to_atlas_limit);
 
 #define MM_FB_EVENTID_LEN   5
-#define MM_FB_HAL_LIMIT	(60*1000)
+#define MM_FB_HAL_LIMIT    (60*1000)
 #define IS_DIGITAL(x) (((x) >= '0') && ((x) <= '9'))
 static ssize_t mm_fb_write(struct file *file,
 				const char __user *buf,
@@ -377,7 +378,7 @@ static ssize_t mm_fb_write(struct file *file,
 	r_buf = (char *)kzalloc(MAX_PAYLOAD_DATASIZE, GFP_KERNEL);
 	if (!r_buf) {
 		return count;
-	}
+    }
 
 	if (copy_from_user(r_buf, buf, MAX_PAYLOAD_DATASIZE > count ? count : MAX_PAYLOAD_DATASIZE)) {
 		goto exit;

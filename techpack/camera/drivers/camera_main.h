@@ -108,9 +108,9 @@ static struct platform_driver *const cam_component_drivers[] = {
 	&cam_sensor_platform_driver,
 	&cam_eeprom_platform_driver,
 	&cam_ois_platform_driver,
-	/*ifdef OPLUS_FEATURE_CAMERA_COMMON */
+/*ifdef OPLUS_FEATURE_CAMERA_COMMON */
 	&tof_pltf_driver,
-	/*end OPLUS_FEATURE_CAMERA_COMMON*/
+/*end OPLUS_FEATURE_CAMERA_COMMON*/
 #if IS_REACHABLE(CONFIG_LEDS_QPNP_FLASH_V2) || \
 	IS_REACHABLE(CONFIG_LEDS_QTI_FLASH)
 	&cam_flash_platform_driver,

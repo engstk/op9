@@ -349,7 +349,7 @@ const struct file_operations sensors_ssc_fops = {
 static int sensors_ssc_probe(struct platform_device *pdev)
 {
 	int ret = slpi_loader_init_sysfs(pdev);
-#ifdef CONFIG_OPLUS_BUG_STABILITY
+#ifdef OPLUS_BUG_STABILITY
 	struct regulator *vdd_2v8 = NULL;
 	struct regulator *vddio_1v8 = NULL;
 #endif
@@ -396,13 +396,13 @@ static int sensors_ssc_probe(struct platform_device *pdev)
 
 	INIT_WORK(&slpi_ldr_work, slpi_load_fw);
 
-#ifdef CONFIG_OPLUS_BUG_STABILITY
+#ifdef OPLUS_BUG_STABILITY
 	vdd_2v8 = regulator_get(&pdev->dev, "vdd");
 	vddio_1v8 = regulator_get(&pdev->dev, "vddio");
 
 	if (vdd_2v8 != NULL) {
 		dev_err(&pdev->dev,"%s: vdd_2v8 is not NULL\n", __func__);
-		regulator_set_voltage(vdd_2v8, 2800000, 3104000);
+		regulator_set_voltage(vdd_2v8, 2800000, 3304000);
 		//regulator_set_load(vdd_2v8, 200000);
 		ret = regulator_enable(vdd_2v8);
 		if (ret)
@@ -423,7 +423,7 @@ static int sensors_ssc_probe(struct platform_device *pdev)
 	}
 	else
 		dev_err(&pdev->dev,"%s: vddio_1v8 is NULL\n", __func__);
-#endif//CONFIG_OPLUS_BUG_STABILITY
+#endif//OPLUS_BUG_STABILITY
 
 	return 0;
 

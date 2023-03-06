@@ -1,7 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-/*
- * Copyright (C) 2018-2020 Oplus. All rights reserved.
- */
+/************************************************************************************
+** File: - android\kernel\arch\arm\mach-msm\include\mach\oplus_boot.h
+** VENDOR_EDIT
+** Copyright (C), 2008-2012, OPLUS Mobile Comm Corp., Ltd
+** 
+** Description:  
+**     change define of boot_mode here for other place to use it
+** Version: 1.0 
+** --------------------------- Revision History: --------------------------------
+** 	           <author>	           <data>			    <desc>
+************************************************************************************/
 #ifndef _OPLUS_BOOT_H
 #define _OPLUS_BOOT_H
 enum{
@@ -20,13 +27,17 @@ enum{
 };
 
 extern int get_boot_mode(void);
-/*add for charge*/
+#ifdef VENDOR_EDIT
 extern bool qpnp_is_power_off_charging(void);
-/*add for detect charger when reboot */
+#endif
+#ifdef VENDOR_EDIT
 extern bool qpnp_is_charger_reboot(void);
-/*Add for kernel monitor whole bootup*/
+#endif /*VENDOR_EDIT*/
+#endif  /*_OPLUS_BOOT_H*/
+
+#ifdef VENDOR_EDIT
 #ifdef PHOENIX_PROJECT
 extern bool op_is_monitorable_boot(void);
 #endif
-#endif /* _OPLUS_BOOT_H */
+#endif
 

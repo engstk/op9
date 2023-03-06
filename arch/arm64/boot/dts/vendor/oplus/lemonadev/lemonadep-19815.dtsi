@@ -40,6 +40,9 @@
 		platform_support_project_dir = <19815 19815 19815>;
 		platform_support_project_commandline = "mdss_dsi_samsung_amb670yf01_dsc_cmd",
 		"mdss_dsi_samsung_amb670yf01_o_dsc_cmd", "mdss_dsi_samsung_sofef00_m_video";
+		panel = <&dsi_samsung_amb670yf01_dsc_cmd
+		         &dsi_samsung_amb670yf01_o_dsc_cmd
+		         &dsi_samsung_sofef00_m_video>;
 
 		prevention,curved_screen_V2;
 		prevention,grip_disable_level = <6>;
@@ -218,6 +221,7 @@
 };
 //#endif /* OPLUS_BUG_STABILITY */
 //#ifdef OPLUS_CHG_BASIC
+//yangfangiao@bsp,for S1C drop issue
 &wlan {
 	qcom,vdd-wlan-rfa1-config = <1880000 2000000 0 0 1>;
 };
@@ -390,6 +394,9 @@
 		};
 	};
 	//#endif /*OPLUS_FEATURE_SENSOR_SMEM*/
+	midas_pdev {
+                compatible = "oplus,midas-pdev";
+        };
 };
 //#ifdef OPLUS_FEATURE_RF_CABLE_DETECT
 &tlmm {

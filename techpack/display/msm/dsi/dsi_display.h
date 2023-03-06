@@ -793,6 +793,8 @@ int dsi_display_cont_splash_config(void *display);
 #ifdef OPLUS_BUG_STABILITY
 struct dsi_display *get_main_display(void);
 struct dsi_display *get_sec_display(void);
+struct dsi_display *get_current_display(void);
+void set_current_display(struct dsi_display *display);
 
 /* Add for implement panel register read */
 int dsi_host_alloc_cmd_tx_buffer(struct dsi_display *display);

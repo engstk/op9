@@ -20,6 +20,11 @@
 #define CAM_TFE_HW_NUM_MAX   3
 #define CAM_TFE_RDI_NUM_MAX  3
 
+#ifdef OPLUS_FEATURE_CAMERA_COMMON
+//lanhe add
+#define CAM_IFE_CTX_RDI_SOF_EN BIT(31)
+#endif
+
 /* maximum context numbers for TFE */
 #define CAM_TFE_CTX_MAX      4
 
@@ -161,6 +166,9 @@ struct cam_isp_prepare_hw_update_data {
  *
  */
 struct cam_isp_hw_sof_event_data {
+#ifdef OPLUS_FEATURE_CAMERA_COMMON//lanhe todo
+	uint32_t       res_id;
+#endif
 	uint64_t       timestamp;
 	uint64_t       boot_time;
 };
@@ -241,7 +249,6 @@ enum cam_isp_hw_mgr_command {
 	CAM_ISP_HW_MGR_CMD_CTX_TYPE,
 	CAM_ISP_HW_MGR_GET_PACKET_OPCODE,
 	CAM_ISP_HW_MGR_GET_LAST_CDM_DONE,
-	CAM_ISP_HW_MGR_GET_ANCHOR_CONFIG,
 	CAM_ISP_HW_MGR_CMD_UPDATE_CLOCK,
 	CAM_ISP_HW_MGR_CMD_MAX,
 };
@@ -259,7 +266,6 @@ enum cam_isp_ctx_type {
  * @cmd_type:              HW command type
  * @cmd_data:              Command data
  * @sof_irq_enable:        To debug if SOF irq is enabled
- * @is_anchor_instance:    Indicate whether it is anchor instance
  * @ctx_type:              RDI_ONLY, PIX and RDI, or FS2
  * @packet_op_code:        Packet opcode
  * @last_cdm_done:         Last cdm done request
@@ -268,7 +274,6 @@ struct cam_isp_hw_cmd_args {
 	uint32_t                          cmd_type;
 	void                             *cmd_data;
 	union {
-		bool                          is_anchor_instance;
 		uint32_t                      sof_irq_enable;
 		uint32_t                      ctx_type;
 		uint32_t                      packet_op_code;
