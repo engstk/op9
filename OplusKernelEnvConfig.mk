@@ -124,13 +124,11 @@ OPLUS_FEATURE_SENSOR_FEEDBACK
 
 #only declare a macro if nativefeature is define and also added in above ALLOWED_MCROS
 $(foreach myfeature,$(ALLOWED_MCROS),\
-    $(if $(strip $($(myfeature))),\
-         $(warning make $(myfeature) to be a macro here) \
          $(eval KBUILD_CFLAGS += -D$(myfeature)) \
          $(eval KBUILD_CPPFLAGS += -D$(myfeature)) \
          $(eval CFLAGS_KERNEL += -D$(myfeature)) \
          $(eval CFLAGS_MODULE += -D$(myfeature)) \
-))
+)
 
 # BSP team can do customzation by referring the feature variables
 
@@ -164,7 +162,6 @@ ifeq ($(OPLUS_FEATURE_SECURE_KEYINTERFACESGUARD),yes)
 KBUILD_CFLAGS += -DOPLUS_DISALLOW_KEY_INTERFACES
 endif
 
-$(warning "OPLUS_VND_ENV_CHG_OP9RT_PMIC_VOOCPHY is $(strip $(OPLUS_VND_ENV_CHG_OP9RT_PMIC_VOOCPHY))")
 ifeq ($(OPLUS_VND_ENV_CHG_OP9RT_PMIC_VOOCPHY),yes)
 export CONFIG_OPLUS_CHG_OP9RT_PMIC_VOOCPHY=y
 endif
