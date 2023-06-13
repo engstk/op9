@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm64 5.4.233 Kernel Configuration
+# Linux/arm64 5.4.242 Kernel Configuration
 #
 
 #
@@ -1268,7 +1268,6 @@ CONFIG_NET_SCH_INGRESS=y
 #
 CONFIG_NET_CLS=y
 # CONFIG_NET_CLS_BASIC is not set
-# CONFIG_NET_CLS_TCINDEX is not set
 # CONFIG_NET_CLS_ROUTE4 is not set
 CONFIG_NET_CLS_FW=y
 CONFIG_NET_CLS_U32=y
@@ -3733,7 +3732,6 @@ CONFIG_DRM_LONTIUM_LT9611UXC=y
 # CONFIG_DRM_ARCPGU is not set
 # CONFIG_DRM_HISI_HIBMC is not set
 # CONFIG_DRM_HISI_KIRIN is not set
-# CONFIG_DRM_MXSFB is not set
 # CONFIG_DRM_GM12U320 is not set
 # CONFIG_TINYDRM_HX8357D is not set
 # CONFIG_TINYDRM_ILI9225 is not set
@@ -4943,6 +4941,7 @@ CONFIG_MSM_GENI_SE=y
 # CONFIG_MSM_11AD is not set
 # CONFIG_IOSS is not set
 # CONFIG_R8125 is not set
+# CONFIG_R8168 is not set
 # end of Qualcomm technologies inc. MSM specific device drivers
 
 CONFIG_CLKDEV_LOOKUP=y
