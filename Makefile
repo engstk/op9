@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 VERSION = 5
 PATCHLEVEL = 4
-SUBLEVEL = 249
+SUBLEVEL = 254
 EXTRAVERSION =
 NAME = Kleptomaniac Octopus
 
@@ -126,8 +126,6 @@ export quiet Q KBUILD_VERBOSE
 #
 # The O= assignment takes precedence over the KBUILD_OUTPUT environment
 # variable.
-
-KBUILD_OUTPUT := /tmp/out_op9
 
 # Do we want to change the working directory?
 ifeq ("$(origin O)", "command line")
@@ -370,8 +368,7 @@ include scripts/subarch.include
 # Alternatively CROSS_COMPILE can be set in the environment.
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
-ARCH		?= arm64
-CROSS_COMPILE	?= ~/android/toolchains/aarch64-linux-android-4.9/bin/aarch64-linux-android-
+ARCH		?= $(SUBARCH)
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -416,7 +413,7 @@ HOSTCC	= gcc
 HOSTCXX	= g++
 endif
 KBUILD_HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 \
-		-fomit-frame-pointer -std=gnu89 -Wno-deprecated-declarations -pipe $(HOST_LFS_CFLAGS) \
+		-fomit-frame-pointer -std=gnu89 $(HOST_LFS_CFLAGS) \
 		$(HOSTCFLAGS)
 KBUILD_HOSTCXXFLAGS := -O2 $(HOST_LFS_CFLAGS) $(HOSTCXXFLAGS)
 KBUILD_HOSTLDFLAGS  := $(HOST_LFS_LDFLAGS) $(HOSTLDFLAGS)
@@ -496,13 +493,6 @@ KBUILD_CFLAGS   := -Wall -Wundef -Werror=strict-prototypes -Wno-trigraphs \
 		   -Werror=implicit-function-declaration -Werror=implicit-int \
 		   -Werror=return-type -Wno-format-security \
 		   -std=gnu89
-		   -mcpu=cortex-a55 -fdiagnostics-color=always -pipe \
-		   -Wno-void-pointer-to-enum-cast -Wno-misleading-indentation -Wno-unused-function -Wno-bool-operation \
-		   -Wno-unsequenced -Wno-void-pointer-to-int-cast -Wno-unused-variable -Wno-pointer-to-int-cast -Wno-pointer-to-enum-cast \
-		   -Wno-fortify-source -Wno-strlcpy-strlcat-size -Wno-align-mismatch -Wno-unused-but-set-variable \
-		   -Wno-unused-result -Wno-deprecated -Wno-deprecated-declarations -Wformat=0 \
-		   -Wno-enum-conversion -Wno-array-parameter
-
 KBUILD_CPPFLAGS := -D__KERNEL__
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
@@ -553,6 +543,7 @@ OPLUS_AGING_TEST := true
 #enable kasan
 OPLUS_KASAN_TEST := true
 endif
+$(warning OPLUS_KASAN_TEST is $(OPLUS_KASAN_TEST))
 
 ifeq ($(AGING_DEBUG_MASK),3)
 #enable rtb
@@ -603,6 +594,8 @@ OPLUS_MEMLEAK_DETECT := true
 endif
 
 #Add for memleak test
+$(warning TARGET_MEMLEAK_DETECT_TEST value is "$(TARGET_MEMLEAK_DETECT_TEST)")
+$(warning OPLUS_MEMLEAK_DETECT value is "$(OPLUS_MEMLEAK_DETECT)")
 export OPLUS_MEMLEAK_DETECT
 #endif
 
@@ -626,8 +619,6 @@ export RCS_FIND_IGNORE := \( -name SCCS -o -name BitKeeper -o -name .svn -o    \
 			  -prune -o
 export RCS_TAR_IGNORE := --exclude SCCS --exclude BitKeeper --exclude .svn \
 			 --exclude CVS --exclude .pc --exclude .hg --exclude .git
-
-KBUILD_CFLAGS	+= $(call cc-option,-Wno-misleading-indentation)
 
 # ===========================================================================
 # Rules shared between *config targets and build targets
@@ -906,6 +897,7 @@ KBUILD_CFLAGS += -Wno-tautological-compare
 # See modpost pattern 2
 KBUILD_CFLAGS += -mno-global-merge
 KBUILD_CFLAGS += $(call cc-disable-warning, undefined-optimized)
+KBUILD_CFLAGS += -fno-builtin
 else
 
 # Warn about unmarked fall-throughs in switch statement.
