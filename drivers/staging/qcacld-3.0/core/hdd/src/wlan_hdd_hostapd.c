@@ -4980,9 +4980,8 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx)
 	}
 
 	for (i = 0; i < cache_chann->num_channels; i++) {
-		freq = wlan_reg_chan_to_freq(
-				hdd_ctx->pdev,
-				cache_chann->channel_info[i].channel_num);
+		freq = cache_chann->channel_info[i].freq;
+
 		if (!freq)
 			continue;
 
@@ -4997,8 +4996,8 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx)
 		wiphy_channel->flags =
 				cache_chann->channel_info[i].wiphy_status;
 
-		hdd_debug("Restore channel %d reg_stat %d wiphy_stat 0x%x",
-			  cache_chann->channel_info[i].channel_num,
+		hdd_debug("Restore channel_freq %d reg_stat %d wiphy_stat 0x%x",
+			  cache_chann->channel_info[i].freq,
 			  cache_chann->channel_info[i].reg_status,
 			  wiphy_channel->flags);
 	}
@@ -5050,8 +5049,8 @@ int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 	}
 
 	for (i = 0; i < cache_chann->num_channels; i++) {
-		freq = wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
-						    cache_chann->channel_info[i].channel_num);
+		freq = cache_chann->channel_info[i].freq;
+
 		if (!freq)
 			continue;
 		wiphy_channel = wlan_hdd_get_wiphy_channel(wiphy, freq);
@@ -5068,8 +5067,8 @@ int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 							freq);
 		cache_chann->channel_info[i].wiphy_status =
 							wiphy_channel->flags;
-		hdd_debug("Disable channel %d reg_stat %d wiphy_stat 0x%x",
-			  cache_chann->channel_info[i].channel_num,
+		hdd_debug("Disable channel_freq %d reg_stat %d wiphy_stat 0x%x",
+			  cache_chann->channel_info[i].freq,
 			  cache_chann->channel_info[i].reg_status,
 			  wiphy_channel->flags);
 
@@ -5273,6 +5272,21 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			return -EINVAL;
 		}
 	}
+
+	/*
+	 * For STA+SAP/GO concurrency support from GUI, In case if
+	 * START AP/GO request comes just before the SAE authentication
+	 * completion on STA, SAE AUTH REQ waits for START AP RSP and
+	 * START AP RSP waits to complete SAE AUTH REQ.
+	 * Driver completes START AP RSP only upon SAE AUTH REQ timeout(5 sec)
+	 * as start ap will be in serialization pending queue, and SAE auth
+	 * sequence cannot complete as hostap thread is blocked in start ap
+	 * cfg80211 ops.
+	 * To avoid above deadlock until SAE timeout, abort the SAE connection
+	 * immediately and complete START AP/GO asap so that the upper layer
+	 * can trigger a fresh connection after START AP/GO completion.
+	 */
+	hdd_abort_ongoing_sta_sae_connection(hdd_ctx, adapter);
 
 	mac_handle = hdd_ctx->mac_handle;
 
@@ -6042,6 +6056,21 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		hdd_err("stop ap is given on device modes other than SAP/GO. Hence return");
 		goto exit;
 	}
+
+	/*
+	 * For STA+SAP/GO concurrency support from GUI, In case if
+	 * STOP AP/GO request comes just before the SAE authentication
+	 * completion on STA, SAE AUTH REQ waits for STOP AP RSP and
+	 * STOP AP RSP waits to complete SAE AUTH REQ.
+	 * Driver completes STOP AP RSP only upon SAE AUTH REQ timeout(5 sec)
+	 * as stop ap will be in serialization pending queue, and SAE auth
+	 * sequence cannot complete as hostap thread is blocked in stop ap
+	 * cfg80211 ops.
+	 * To avoid above deadlock until SAE timeout, abort the SAE connection
+	 * immediately and complete STOP AP/GO asap so that the upper layer
+	 * can trigger a fresh connection after STOP AP/GO completion.
+	 */
+	hdd_abort_ongoing_sta_sae_connection(hdd_ctx, adapter);
 
 	/* Clear SOFTAP_INIT_DONE flag to mark stop_ap deinit. So that we do
 	 * not restart SAP after SSR as SAP is already stopped from user space.
