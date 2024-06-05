@@ -518,7 +518,7 @@ static int msm_minidump_add_header(void)
 
 	/* 4th section is linux banner */
 	banner = (char *)ehdr + strtbl_off + MAX_STRTBL_SIZE;
-	strlcpy(banner, linux_banner, strlen(linux_banner) + 1);
+	strlcpy(banner, linux_banner, MAX_STRTBL_SIZE);
 
 	shdr->sh_type = SHT_PROGBITS;
 	shdr->sh_offset = (elf_addr_t)(strtbl_off + MAX_STRTBL_SIZE);
@@ -570,8 +570,13 @@ static int __init msm_minidump_init(void)
 	minidump_table.revision = md_global_toc->md_revision;
 	md_ss_toc = &md_global_toc->md_ss_toc[MD_SS_HLOS_ID];
 
-	md_ss_toc->encryption_status = MD_SS_ENCR_NONE;
-	md_ss_toc->encryption_required = MD_SS_ENCR_REQ;
+	if (IS_ENABLED(CONFIG_QCOM_MINIDUMP_ENCRYPT)) {
+		md_ss_toc->encryption_status = MD_SS_ENCR_NONE;
+		md_ss_toc->encryption_required = MD_SS_ENCR_REQ;
+	} else {
+		md_ss_toc->encryption_status = MD_SS_ENCR_DONE;
+		md_ss_toc->encryption_required = MD_SS_ENCR_NOTREQ;
+	}
 
 	minidump_table.md_ss_toc = md_ss_toc;
 	minidump_table.md_regions = kzalloc((MAX_NUM_ENTRIES *
