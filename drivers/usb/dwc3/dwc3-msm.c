@@ -4036,9 +4036,6 @@ static int dwc3_msm_id_notifier(struct notifier_block *nb,
 	if (!edev || !mdwc)
 		return NOTIFY_DONE;
 
-	if (!mdwc->usb_data_enabled)
-		return NOTIFY_DONE;
-
 	dwc = platform_get_drvdata(mdwc->dwc3);
 
 	dbg_event(0xFF, "extcon idx", enb->idx);
@@ -4092,14 +4089,6 @@ static int dwc3_msm_vbus_notifier(struct notifier_block *nb,
 
 	if (!edev || !mdwc)
 		return NOTIFY_DONE;
-
-	if (!mdwc->usb_data_enabled) {
-		if (event)
-			dwc3_msm_gadget_vbus_draw(mdwc, 500);
-		else
-			dwc3_msm_gadget_vbus_draw(mdwc, 0);
-		return NOTIFY_DONE;
-	}
 
 	dwc = platform_get_drvdata(mdwc->dwc3);
 
@@ -4219,6 +4208,25 @@ static inline const char *usb_role_string(enum usb_role role)
 	return "Invalid";
 }
 
+static bool dwc3_msm_role_allowed(struct dwc3_msm *mdwc, enum usb_role role)
+{
+	struct dwc3 *dwc = platform_get_drvdata(mdwc->dwc3);
+	dev_dbg(mdwc->dev, "%s: dr_mode=%d role_requested=%s\n",
+		__func__, (int) dwc->dr_mode,
+		usb_role_string(role));
+
+	if (role == USB_ROLE_HOST && dwc->dr_mode == USB_DR_MODE_PERIPHERAL)
+		return false;
+
+	if (role == USB_ROLE_DEVICE && dwc->dr_mode == USB_DR_MODE_HOST)
+		return false;
+
+	if (!mdwc->usb_data_enabled && role != USB_ROLE_NONE)
+		return false;
+
+	return true;
+}
+
 static enum usb_role dwc3_msm_usb_get_role(struct device *dev)
 {
 	struct dwc3_msm *mdwc = dev_get_drvdata(dev);
@@ -4248,6 +4256,9 @@ static int dwc3_msm_usb_set_role(struct device *dev, enum usb_role role)
 	struct dwc3_msm *mdwc = dev_get_drvdata(dev);
 	struct dwc3 *dwc = platform_get_drvdata(mdwc->dwc3);
 	enum usb_role cur_role = USB_ROLE_NONE;
+
+	if (!dwc3_msm_role_allowed(mdwc, role))
+		return -EINVAL;
 
 	cur_role = dwc3_msm_usb_get_role(dev);
 #ifdef OPLUS_FEATURE_CHG_BASIC
@@ -4362,17 +4373,15 @@ static ssize_t mode_store(struct device *dev, struct device_attribute *attr,
 		const char *buf, size_t count)
 {
 	struct dwc3_msm *mdwc = dev_get_drvdata(dev);
-	struct dwc3 *dwc = platform_get_drvdata(mdwc->dwc3);
 
 	if (sysfs_streq(buf, "peripheral")) {
-		if (dwc->dr_mode == USB_DR_MODE_HOST) {
-			dev_err(dev, "Core supports host mode only.\n");
+		if (!dwc3_msm_role_allowed(mdwc, USB_ROLE_DEVICE))
 			return -EINVAL;
-		}
-
 		mdwc->vbus_active = true;
 		mdwc->id_state = DWC3_ID_FLOAT;
 	} else if (sysfs_streq(buf, "host")) {
+		if (!dwc3_msm_role_allowed(mdwc, USB_ROLE_HOST))
+			return -EINVAL;
 		mdwc->vbus_active = false;
 		mdwc->id_state = DWC3_ID_GROUND;
 	} else {
@@ -4720,15 +4729,14 @@ static ssize_t usb_data_enabled_store(struct device *dev,
 				      const char *buf, size_t count)
 {
 	struct dwc3_msm *mdwc = dev_get_drvdata(dev);
+	bool enabled;
 
-	if (kstrtobool(buf, &mdwc->usb_data_enabled))
+	if (kstrtobool(buf, &enabled))
 		return -EINVAL;
 
-	if (!mdwc->usb_data_enabled) {
-		mdwc->vbus_active = false;
-		mdwc->id_state = DWC3_ID_FLOAT;
-		dwc3_ext_event_notify(mdwc);
-	}
+	mdwc->usb_data_enabled = enabled;
+	if (!enabled)
+		dwc3_msm_usb_set_role(dev, USB_ROLE_NONE);
 
 	return count;
 }
@@ -5868,8 +5876,7 @@ static void dwc3_otg_sm_work(struct work_struct *w)
 			mdwc->drd_state = DRD_STATE_PERIPHERAL;
 			work = true;
 		} else {
-			if (mdwc->usb_data_enabled)
-				dwc3_msm_gadget_vbus_draw(mdwc, 0);
+			dwc3_msm_gadget_vbus_draw(mdwc, 0);
 			dev_dbg(mdwc->dev, "Cable disconnected\n");
 		}
 		break;
