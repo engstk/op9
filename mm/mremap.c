@@ -210,38 +210,6 @@ static void move_ptes(struct vm_area_struct *vma, pmd_t *old_pmd,
 		drop_rmap_locks(vma);
 }
 
-#ifdef CONFIG_SPECULATIVE_PAGE_FAULT
-static inline bool trylock_vma_ref_count(struct vm_area_struct *vma)
-{
-	/*
-	 * If we have the only reference, swap the refcount to -1. This
-	 * will prevent other concurrent references by get_vma() for SPFs.
-	 */
-	return atomic_cmpxchg(&vma->vm_ref_count, 1, -1) == 1;
-}
-
-/*
- * Restore the VMA reference count to 1 after a fast mremap.
- */
-static inline void unlock_vma_ref_count(struct vm_area_struct *vma)
-{
-	/*
-	 * This should only be called after a corresponding,
-	 * successful trylock_vma_ref_count().
-	 */
-	VM_BUG_ON_VMA(atomic_cmpxchg(&vma->vm_ref_count, -1, 1) != -1,
-		      vma);
-}
-#else	/* !CONFIG_SPECULATIVE_PAGE_FAULT */
-static inline bool trylock_vma_ref_count(struct vm_area_struct *vma)
-{
-	return true;
-}
-static inline void unlock_vma_ref_count(struct vm_area_struct *vma)
-{
-}
-#endif	/* CONFIG_SPECULATIVE_PAGE_FAULT */
-
 #ifdef CONFIG_HAVE_MOVE_PMD
 static bool move_normal_pmd(struct vm_area_struct *vma, unsigned long old_addr,
 		  unsigned long new_addr, unsigned long old_end,
@@ -260,14 +228,6 @@ static bool move_normal_pmd(struct vm_area_struct *vma, unsigned long old_addr,
 	 * should have release it.
 	 */
 	if (WARN_ON(!pmd_none(*new_pmd)))
-		return false;
-
-	/*
-	 * We hold both exclusive mmap_lock and rmap_lock at this point and
-	 * cannot block. If we cannot immediately take exclusive ownership
-	 * of the VMA fallback to the move_ptes().
-	 */
-	if (!trylock_vma_ref_count(vma))
 		return false;
 
 	/*
@@ -292,7 +252,6 @@ static bool move_normal_pmd(struct vm_area_struct *vma, unsigned long old_addr,
 		spin_unlock(new_ptl);
 	spin_unlock(old_ptl);
 
-	unlock_vma_ref_count(vma);
 	return true;
 }
 #else
@@ -568,14 +527,6 @@ static unsigned long move_vma(struct vm_area_struct *vma,
 		return -ENOMEM;
 	}
 
-	/* new_vma is returned protected by copy_vma, to prevent speculative
-	 * page fault to be done in the destination area before we move the pte.
-	 * Now, we must also protect the source VMA since we don't want pages
-	 * to be mapped in our back while we are copying the PTEs.
-	 */
-	if (vma != new_vma)
-		vm_write_begin(vma);
-
 	moved_len = move_page_tables(vma, old_addr, new_vma, new_addr, old_len,
 				     need_rmap_locks);
 	if (moved_len < old_len) {
@@ -592,8 +543,6 @@ static unsigned long move_vma(struct vm_area_struct *vma,
 		 */
 		move_page_tables(new_vma, new_addr, vma, old_addr, moved_len,
 				 true);
-		if (vma != new_vma)
-			vm_write_end(vma);
 		vma = new_vma;
 		old_len = new_len;
 		old_addr = new_addr;
@@ -602,10 +551,7 @@ static unsigned long move_vma(struct vm_area_struct *vma,
 		mremap_userfaultfd_prep(new_vma, uf);
 		arch_remap(mm, old_addr, old_addr + old_len,
 			   new_addr, new_addr + new_len);
-		if (vma != new_vma)
-			vm_write_end(vma);
 	}
-	vm_write_end(new_vma);
 
 	/* Conceal VM_ACCOUNT so old reservation is not undone */
 	if (vm_flags & VM_ACCOUNT && !(flags & MREMAP_DONTUNMAP)) {
