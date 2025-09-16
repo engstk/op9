@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm64 5.4.293 Kernel Configuration
+# Linux/arm64 5.4.295 Kernel Configuration
 #
 
 #
@@ -4936,6 +4936,7 @@ CONFIG_QCA_CLD_WLAN_PROFILE="default"
 # CONFIG_MFD_CROS_EC is not set
 # CONFIG_CHROME_PLATFORMS is not set
 # CONFIG_MELLANOX_PLATFORM is not set
+CONFIG_SURFACE_PLATFORMS=y
 
 #
 # Qualcomm technologies inc. MSM specific device drivers
