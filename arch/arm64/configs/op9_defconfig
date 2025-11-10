@@ -4956,6 +4956,7 @@ CONFIG_MSM_GENI_SE=y
 # CONFIG_IOSS is not set
 # CONFIG_R8125 is not set
 # CONFIG_R8168 is not set
+# CONFIG_USB_R8152_RTL is not set
 # end of Qualcomm technologies inc. MSM specific device drivers
 
 CONFIG_CLKDEV_LOOKUP=y
