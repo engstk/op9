@@ -2614,6 +2614,8 @@ enum netdev_cmd {
 	NETDEV_CVLAN_FILTER_DROP_INFO,
 	NETDEV_SVLAN_FILTER_PUSH_INFO,
 	NETDEV_SVLAN_FILTER_DROP_INFO,
+	NETDEV_BR_JOIN,
+	NETDEV_BR_LEAVE,
 };
 const char *netdev_cmd_to_name(enum netdev_cmd cmd);
 

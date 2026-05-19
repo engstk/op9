@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -2381,7 +2381,7 @@ error:
 	return rc;
 }
 
-static int dp_panel_init_panel_info(struct dp_panel *dp_panel)
+static int dp_panel_init_panel_info(struct dp_panel *dp_panel, bool skip_op)
 {
 	int rc = 0;
 	struct dp_panel_private *panel;
@@ -2392,6 +2392,9 @@ static int dp_panel_init_panel_info(struct dp_panel *dp_panel)
 		rc = -EINVAL;
 		goto end;
 	}
+
+	if (skip_op)
+		goto end;
 
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
 	pinfo = &dp_panel->pinfo;

@@ -31,6 +31,8 @@
 #include <linux/log2.h>
 #include <linux/etherdevice.h>
 #include <linux/msm_pcie.h>
+#include <linux/of_reserved_mem.h>
+#include <linux/cma.h>
 #include <soc/qcom/subsystem_restart.h>
 #include <soc/qcom/subsystem_notif.h>
 #include <soc/qcom/ramdump.h>
@@ -1618,6 +1620,43 @@ static void cnss_pcie_reset_platform_ops(struct device *dev)
 	dev->platform_data = NULL;
 }
 
+#if IS_ENABLED(CONFIG_ARCH_QCOM)
+/**
+ * cnss_pci_of_reserved_mem_device_init() - Assign reserved memory region
+ *                                          to given PCI device
+ * @pdev: context pointer of pdev
+ *
+ * This function shall call corresponding of_reserved_mem_device* API to
+ * assign reserved memory region to PCI device based on where the memory is
+ * defined and attached to (platform device of_node or PCI device of_node)
+ * in device tree.
+ *
+ * Return: 0 for success, negative value for error
+ */
+static int cnss_pci_of_reserved_mem_device_init(struct pci_dev *pdev)
+{
+	struct device *dev_pci = &pdev->dev;
+	int ret;
+
+	/* Use of_reserved_mem_device_init_by_idx() if reserved memory is
+	 * attached to platform device of_node.
+	 */
+	ret = of_reserved_mem_device_init(dev_pci);
+	if (ret)
+		pr_err("Failed to init reserved mem device, err = %d\n",
+		       ret);
+	if (dev_pci->cma_area)
+		pr_debug("CMA area is %s\n", cma_get_name(dev_pci->cma_area));
+
+	return ret;
+}
+#else
+static int cnss_pci_of_reserved_mem_device_init(struct pci_dev *pdev)
+{
+	return 0;
+}
+#endif
+
 static int cnss_wlan_pci_probe(struct pci_dev *pdev,
 			       const struct pci_device_id *id)
 {
@@ -1634,6 +1673,7 @@ static int cnss_wlan_pci_probe(struct pci_dev *pdev,
 	atomic_set(&penv->fw_available, 0);
 	penv->device_id = pdev->device;
 
+	cnss_pci_of_reserved_mem_device_init(pdev);
 	if (penv->smmu_iova_len) {
 		ret = cnss_smmu_init(&pdev->dev);
 		if (ret) {

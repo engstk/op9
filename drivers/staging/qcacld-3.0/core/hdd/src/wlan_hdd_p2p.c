@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -286,15 +286,16 @@ wlan_hdd_validate_and_override_offchan(struct hdd_adapter *adapter,
 				       struct ieee80211_channel *chan,
 				       bool *offchan)
 {
-	uint8_t home_ch;
+	qdf_freq_t home_ch_freq;
 
 	if (!offchan || !chan || !(*offchan))
 		return;
 
-	home_ch = hdd_get_adapter_home_channel(adapter);
+	home_ch_freq = hdd_get_adapter_home_channel(adapter);
 
-	if (ieee80211_frequency_to_channel(chan->center_freq) == home_ch) {
-		hdd_debug("override offchan to 0 at home channel %d", home_ch);
+	if (chan->center_freq == home_ch_freq) {
+		hdd_debug("override offchan to 0 at home channel %d",
+			  home_ch_freq);
 		*offchan = false;
 	}
 }

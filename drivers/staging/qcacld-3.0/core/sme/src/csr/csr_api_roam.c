@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -17422,6 +17422,8 @@ static void csr_cm_update_driver_assoc_ies(
 		MIN_TX_PWR_CAP, MAX_TX_PWR_CAP};
 	uint8_t max_tx_pwr_cap = 0;
 	uint8_t supp_chan_ie[DOT11F_IE_SUPPCHANNELS_MAX_LEN], supp_chan_ie_len;
+	struct s_ext_cap *extcap;
+	uint8_t *ext_cap_ie;
 	static const uint8_t qcn_ie[] = {0x8C, 0xFD, 0xF0, 0x1,
 					 QCN_IE_VERSION_SUBATTR_ID,
 					 QCN_IE_VERSION_SUBATTR_DATA_LEN,
@@ -17432,6 +17434,14 @@ static void csr_cm_update_driver_assoc_ies(
 	rso_mode_cfg->assoc_ie_length = session->nAddIEAssocLength;
 	qdf_mem_copy(rso_mode_cfg->assoc_ie, session->pAddIEAssoc,
 		     rso_mode_cfg->assoc_ie_length);
+
+	ext_cap_ie = (uint8_t *)wlan_get_ie_ptr_from_eid(WLAN_ELEMID_XCAPS,
+							 rso_mode_cfg->assoc_ie,
+							 rso_mode_cfg->assoc_ie_length);
+	if (ext_cap_ie && wma_is_mbssid_enabled()) {
+		extcap = (struct s_ext_cap *)&ext_cap_ie[2];
+		extcap->multi_bssid = 1;
+	}
 
 	if (session->pConnectBssDesc)
 		max_tx_pwr_cap = csr_get_cfg_max_tx_power(
@@ -21586,11 +21596,12 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	 * eapol. So the session->psk_pmk will be stale in PMKSA cached
 	 * SAE/OWE roaming case.
 	 */
+	akm_type = session->connectedProfile.AuthType;
+
 	if (roam_synch_data->authStatus == CSR_ROAM_AUTH_STATUS_AUTHENTICATED ||
-	    session->pCurRoamProfile->negotiatedAuthType ==
-	    eCSR_AUTH_TYPE_SAE ||
-	    session->pCurRoamProfile->negotiatedAuthType ==
-	    eCSR_AUTH_TYPE_OWE) {
+	    akm_type == eCSR_AUTH_TYPE_SAE ||
+	    akm_type == eCSR_AUTH_TYPE_FT_SAE ||
+	    akm_type == eCSR_AUTH_TYPE_OWE) {
 		csr_roam_substate_change(mac_ctx,
 				eCSR_ROAM_SUBSTATE_NONE, session_id);
 		/*
@@ -21615,8 +21626,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 				 &session->connectedProfile.bssid);
 		sme_debug("Trying to find PMKID for " QDF_MAC_ADDR_FMT " AKM Type:%d",
 			  QDF_MAC_ADDR_REF(pmkid_cache->BSSID.bytes),
-			  session->pCurRoamProfile->negotiatedAuthType);
-		akm_type = session->connectedProfile.AuthType;
+			  akm_type);
 		mdie_present = session->connectedProfile.mdid.mdie_present;
 
 		if (csr_lookup_pmkid_using_bssid(mac_ctx, session,
@@ -21696,6 +21706,8 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 					qdf_mem_zero(pmksa, sizeof(*pmksa));
 					qdf_mem_free(pmksa);
 				}
+			} else {
+				sme_debug("PMK not received from fw");
 			}
 			sme_debug("pmkid found for " QDF_MAC_ADDR_FMT " len %d",
 				  QDF_MAC_ADDR_REF(pmkid_cache->BSSID.bytes),

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -704,8 +704,9 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 		}
 
 		if ((ap_constraint_change && local_constraint) ||
-		    (tpe_change && !skip_tpe)) {
+		    (tpe_change && !skip_tpe) || session->cal_tpc_post_csa) {
 			lim_calculate_tpc(mac_ctx, session);
+			session->cal_tpc_post_csa = false;
 
 			if (tx_ops->set_tpc_power)
 				tx_ops->set_tpc_power(mac_ctx->psoc,

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include "msm_cvp_common.h"
@@ -20,7 +21,7 @@ void cvp_dump_fence_queue(struct msm_cvp_inst *inst)
 	ssid = inst->synx_session_id;
 	mutex_lock(&q->lock);
 	dprintk(CVP_WARN, "inst %x fence q mode %d, ssid %d\n",
-			hash32_ptr(inst->session), q->mode, ssid.client_id);
+			inst->sess_id, q->mode, ssid.client_id);
 
 	dprintk(CVP_WARN, "fence cmdq wait list:\n");
 	list_for_each_entry(f, &q->wait_list, list) {

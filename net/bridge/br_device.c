@@ -34,6 +34,10 @@ netdev_tx_t br_dev_xmit(struct sk_buff *skb, struct net_device *dev)
 	const struct nf_br_ops *nf_ops;
 	const unsigned char *dest;
 	u16 vid = 0;
+#ifdef CONFIG_HYFI_BRIDGE_HOOKS
+	struct net_bridge_port *pdst;
+	br_get_dst_hook_t *get_dst_hook;
+#endif
 
 	if (unlikely(!pskb_may_pull(skb, ETH_HLEN))) {
 		kfree_skb(skb);
@@ -82,6 +86,10 @@ netdev_tx_t br_dev_xmit(struct sk_buff *skb, struct net_device *dev)
 				br_do_suppress_nd(skb, br, vid, NULL, msg);
 	}
 
+#ifdef CONFIG_HYFI_BRIDGE_HOOKS
+	get_dst_hook = rcu_dereference(br_get_dst_hook);
+#endif
+
 	dest = eth_hdr(skb)->h_dest;
 	if (is_broadcast_ether_addr(dest)) {
 		br_flood(br, skb, BR_PKT_BROADCAST, false, true);
@@ -107,11 +115,24 @@ netdev_tx_t br_dev_xmit(struct sk_buff *skb, struct net_device *dev)
 			br_multicast_flood(mdst, skb, false, true);
 		else
 			br_flood(br, skb, BR_PKT_MULTICAST, false, true);
-	} else if ((dst = br_fdb_find_rcu(br, dest, vid)) != NULL) {
-		br_forward(dst->dst, skb, false, true);
 	} else {
-		br_flood(br, skb, BR_PKT_UNICAST, false, true);
+#ifdef CONFIG_HYFI_BRIDGE_HOOKS
+		pdst = __br_get(get_dst_hook, NULL, NULL, &skb);
+		if (pdst) {
+			if (!skb)
+				goto out;
+			br_forward(pdst, skb, false, true);
+		} else
+#endif
+		{
+			dst = br_fdb_find_rcu(br, dest, vid);
+			if (dst)
+				br_forward(dst->dst, skb, false, true);
+			else
+				br_flood(br, skb, BR_PKT_UNICAST, false, true);
+		}
 	}
+
 out:
 	rcu_read_unlock();
 	return NETDEV_TX_OK;

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1884,6 +1885,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 
 err:
 	qdf_mem_free(csa_params);
+	session_entry->cal_tpc_post_csa = true;
 }
 
 /*--------------------------------------------------------------------------

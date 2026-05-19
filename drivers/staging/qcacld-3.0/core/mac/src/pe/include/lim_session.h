@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -140,6 +140,7 @@ struct obss_detection_cfg {
  * @prev_auth_seq_num: Sequence number of previously received auth frame to
  * detect duplicate frames.
  * @prev_auth_mac_addr: mac_addr of the sta correspond to @prev_auth_seq_num
+ * @cal_tpc_post_csa: Recalculate tx power power csa
  */
 struct pe_session {
 	/* To check session table is in use or free */
@@ -580,6 +581,7 @@ struct pe_session {
 	uint32_t dfs_regdomain;
 	uint8_t ap_defined_power_type_6g;
 	uint8_t best_6g_power_type;
+	bool cal_tpc_post_csa;
 };
 
 /*-------------------------------------------------------------------------

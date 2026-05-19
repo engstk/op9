@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -120,12 +121,14 @@
  * @BEACON_RSSI_WEIGHT: Beacon Rssi weight parameter
  * @HI_RSSI_DELAY_BTW_SCANS: High Rssi delay between scans
  * @ROAM_RSSI_DIFF_6GHZ: roam rssi diff for 6 GHz AP
+ * @ROAM_RSSI_DELTA_6GHZ_TO_NON_6GHZ: roam rssi diff for Non 6 GHz AP
  */
 enum roam_cfg_param {
 	RSSI_CHANGE_THRESHOLD,
 	BEACON_RSSI_WEIGHT,
 	HI_RSSI_DELAY_BTW_SCANS,
 	ROAM_RSSI_DIFF_6GHZ,
+	ROAM_RSSI_DELTA_6GHZ_TO_NON_6GHZ,
 };
 
 /**
@@ -1206,6 +1209,8 @@ enum roam_rt_stats_params {
  * scan only on prior discovery of any 6 GHz support in the environment.
  * @wlan_roam_rssi_diff_6ghz: This value is used as to how better the RSSI of
  * the new/roamable 6GHz AP should be for roaming.
+ * @wlan_roam_rssi_delta_6ghz_to_non_6ghz: This value is used as to how better
+ * the RSSI of the new/roamable non 6GHz AP should be for roaming.
  */
 struct wlan_roam_start_config {
 	struct wlan_roam_offload_scan_rssi_params rssi_params;
@@ -1229,6 +1234,7 @@ struct wlan_roam_start_config {
 	uint8_t wlan_exclude_rm_partial_scan_freq;
 	uint8_t wlan_roam_full_scan_6ghz_on_disc;
 	uint8_t wlan_roam_rssi_diff_6ghz;
+	uint8_t wlan_roam_rssi_delta_6ghz_to_non_6ghz;
 	/* other wmi cmd structures */
 };
 
@@ -1281,6 +1287,8 @@ struct wlan_roam_stop_config {
  * scan only on prior discovery of any 6 GHz support in the environment.
  * @wlan_roam_rssi_diff_6ghz: This value is used as to how better the RSSI of
  * the new/roamable 6GHz AP should be for roaming.
+ * @wlan_roam_rssi_delta_6ghz_to_non_6ghz: This value is used as to how better
+ * the RSSI of the new/roamable non 6GHz AP should be for roaming.
  */
 struct wlan_roam_update_config {
 	struct wlan_roam_beacon_miss_cnt beacon_miss_cnt;
@@ -1299,6 +1307,7 @@ struct wlan_roam_update_config {
 	uint8_t wlan_exclude_rm_partial_scan_freq;
 	uint8_t wlan_roam_full_scan_6ghz_on_disc;
 	uint8_t wlan_roam_rssi_diff_6ghz;
+	uint8_t wlan_roam_rssi_delta_6ghz_to_non_6ghz;
 };
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
@@ -1522,6 +1531,8 @@ enum roam_fail_params {
  * @roam_invoke_fail_reason: One of reason id from enum
  * wmi_roam_invoke_status_error in case of forced roam
  * @roam_rssi_diff_6ghz: roam rssi diff for 6 GHz AP
+ * @roam_rssi_delta_6ghz_to_non_6ghz: RSSI Delta value to be used for roaming
+ * from 6 GHz to Non 6GHz AP.
  */
 struct wlan_cm_rso_configs {
 	uint8_t rescan_rssi_delta;
@@ -1532,6 +1543,7 @@ struct wlan_cm_rso_configs {
 	uint32_t roam_trigger_reason;
 	uint32_t roam_invoke_fail_reason;
 	uint8_t roam_rssi_diff_6ghz;
+	uint8_t roam_rssi_delta_6ghz_to_non_6ghz;
 };
 
 /**

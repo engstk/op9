@@ -3504,7 +3504,6 @@ TEST(seccomp_get_notif_sizes)
 
 /*
  * TODO:
- * - add microbenchmarks
  * - expand NNP testing
  * - better arch-specific TRACE and TRAP handlers.
  * - endianness checking when appropriate
@@ -3512,7 +3511,6 @@ TEST(seccomp_get_notif_sizes)
  * - arch value testing (x86 modes especially)
  * - verify that FILTER_FLAG_LOG filters generate log messages
  * - verify that RET_LOG generates log messages
- * - ...
  */
 
 TEST_HARNESS_MAIN

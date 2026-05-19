@@ -3710,6 +3710,9 @@ int msm_venc_enable_hybrid_hp(struct msm_vidc_inst *inst)
 	if (ctrl->val)
 		return 0;
 
+	if (msm_vidc_get_fps(inst) <= 60)
+		return 0;
+
 	ctrl = get_ctrl(inst,
 		V4L2_CID_MPEG_VIDC_VIDEO_HEVC_MAX_HIER_CODING_LAYER);
 	layer = get_ctrl(inst, V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_LAYER);

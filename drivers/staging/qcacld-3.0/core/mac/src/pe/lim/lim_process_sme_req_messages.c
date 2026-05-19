@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1903,6 +1903,8 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 	uint16_t bw_val, ch_width;
 	qdf_freq_t curr_op_freq, curr_freq;
 	enum reg_6g_client_type client_mobility_type;
+	enum reg_6g_ap_type ap_power_type_6g;
+	uint16_t reg_max = 0, psd_power = 0;
 	struct ch_params ch_params = {0};
 	tDot11fIEtransmit_power_env single_tpe;
 	/*
@@ -1978,6 +1980,25 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 
 	curr_op_freq = session->curr_op_freq;
 	bw_val = wlan_reg_get_bw_value(session->ch_width);
+
+	if (psd_set) {
+		if (wlan_reg_is_6ghz_chan_freq(curr_op_freq)) {
+			ap_power_type_6g = session->best_6g_power_type;
+
+			wlan_reg_get_client_power_for_connecting_ap(
+						mac->pdev, ap_power_type_6g,
+						curr_op_freq, true, &reg_max, &psd_power);
+
+			/* If reg rules don't support psd power, ignore PSD
+			 * TPE IE
+			 */
+			if (!psd_power) {
+				pe_debug_rl("reg rule doesn't support psd for %d ap type %d",
+					    curr_op_freq, ap_power_type_6g);
+				psd_set = false;
+			}
+		}
+	}
 
 	if (non_psd_set && !psd_set) {
 		single_tpe = tpe_ies[non_psd_index];
@@ -2059,6 +2080,9 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 		single_tpe = tpe_ies[non_psd_index];
 		vdev_mlme->reg_tpc_obj.eirp_power =
 			single_tpe.tx_power[single_tpe.max_tx_pwr_count];
+		pe_debug("eirp_power %d", vdev_mlme->reg_tpc_obj.eirp_power);
+		if (!psd_set)
+			vdev_mlme->reg_tpc_obj.is_psd_power = false;
 	}
 }
 
@@ -2202,7 +2226,6 @@ void lim_calculate_tpc(struct mac_context *mac,
 		skip_tpe = wlan_mlme_skip_tpe(mac->psoc);
 	} else {
 		is_6ghz_freq = true;
-		is_psd_power = wlan_reg_is_6g_psd_power(mac->pdev);
 		if (LIM_IS_STA_ROLE(session))
 			ap_power_type_6g = session->best_6g_power_type;
 	}
@@ -2210,6 +2233,7 @@ void lim_calculate_tpc(struct mac_context *mac,
 	if (mlme_obj->reg_tpc_obj.num_pwr_levels) {
 		is_tpe_present = true;
 		num_pwr_levels = mlme_obj->reg_tpc_obj.num_pwr_levels;
+		is_psd_power = mlme_obj->reg_tpc_obj.is_psd_power;
 	} else {
 		num_pwr_levels = lim_get_num_pwr_levels(is_psd_power,
 							session->ch_width);
@@ -2223,13 +2247,21 @@ void lim_calculate_tpc(struct mac_context *mac,
 
 	ch_params.ch_width = CH_WIDTH_20MHZ;
 
-	for (i = 0; i < num_pwr_levels; i++) {
+	for (i = 0;
+		i < num_pwr_levels && (ch_params.ch_width != CH_WIDTH_INVALID);
+		i++) {
 		if (is_tpe_present) {
 			if (is_6ghz_freq) {
-				wlan_reg_get_client_power_for_connecting_ap(
-				mac->pdev, ap_power_type_6g,
-				mlme_obj->reg_tpc_obj.frequency[i],
-				&is_psd_power, &reg_max, &psd_power);
+				if (is_psd_power) {
+					wlan_reg_get_client_power_for_connecting_ap(
+						mac->pdev, ap_power_type_6g,
+						mlme_obj->reg_tpc_obj.frequency[i],
+						is_psd_power, &reg_max, &psd_power);
+				} else {
+					wlan_reg_get_client_power_for_connecting_ap(
+						mac->pdev, ap_power_type_6g, oper_freq,
+						is_psd_power, &reg_max, &psd_power);
+				}
 			}
 		} else {
 			/* center frequency calculation */
@@ -2241,18 +2273,18 @@ void lim_calculate_tpc(struct mac_context *mac,
 					mac->pdev, oper_freq, 0, &ch_params);
 				mlme_obj->reg_tpc_obj.frequency[i] =
 					ch_params.mhz_freq_seg0;
-				ch_params.ch_width =
-					get_next_higher_bw[ch_params.ch_width];
+				if (ch_params.ch_width != CH_WIDTH_INVALID)
+					ch_params.ch_width =
+						get_next_higher_bw[ch_params.ch_width];
 			}
 			if (is_6ghz_freq) {
 				if (LIM_IS_STA_ROLE(session)) {
 					wlan_reg_get_client_power_for_connecting_ap
 					(mac->pdev, ap_power_type_6g,
 					 mlme_obj->reg_tpc_obj.frequency[i],
-					 &is_psd_power, &reg_max, &psd_power);
+					 is_psd_power, &reg_max, &psd_power);
 				} else {
-					ap_power_type_6g =
-						wlan_reg_get_cur_6g_ap_pwr_type(
+					wlan_reg_get_cur_6g_ap_pwr_type(
 							mac->pdev,
 							&ap_power_type_6g);
 					wlan_reg_get_6g_chan_ap_power(
@@ -2318,7 +2350,6 @@ void lim_calculate_tpc(struct mac_context *mac,
 	}
 
 	mlme_obj->reg_tpc_obj.num_pwr_levels = num_pwr_levels;
-	mlme_obj->reg_tpc_obj.is_psd_power = is_psd_power;
 	mlme_obj->reg_tpc_obj.eirp_power = reg_max;
 	mlme_obj->reg_tpc_obj.power_type_6g = ap_power_type_6g;
 
@@ -6488,6 +6519,9 @@ static void lim_process_set_ie_req(struct mac_context *mac_ctx, uint32_t *msg_bu
 	p_ext_cap = (struct s_ext_cap *)extra_ext_cap.bytes;
 	if (p_ext_cap->interworking_service)
 		p_ext_cap->qos_map = 1;
+
+	if (wma_is_mbssid_enabled())
+		p_ext_cap->multi_bssid = 1;
 
 	extra_ext_cap.num_bytes = lim_compute_ext_cap_ie_length(&extra_ext_cap);
 

@@ -578,7 +578,7 @@ static int sock_bindtoindex_locked(struct sock *sk, int ifindex)
 
 	/* Sorry... */
 	ret = -EPERM;
-	if (!ns_capable(net->user_ns, CAP_NET_RAW))
+	if (sk->sk_bound_dev_if && !ns_capable(net->user_ns, CAP_NET_RAW))
 		goto out;
 
 	ret = -EINVAL;
@@ -1540,6 +1540,13 @@ static int sk_getsockopt(struct sock *sk, int level, int optname,
 
 	case SO_BINDTOIFINDEX:
 		v.val = sk->sk_bound_dev_if;
+		break;
+
+	case SO_NETNS_COOKIE:
+		lv = sizeof(u64);
+		if (len != lv)
+			return -EINVAL;
+		v.val64 = atomic64_read(&sock_net(sk)->net_cookie);
 		break;
 
 	default:

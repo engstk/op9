@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -1273,16 +1273,6 @@ static void _sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 
 	SDE_EVT32(DRMID(crtc), crtc->state->active,
 			sde_kms->splash_data.num_splash_displays);
-
-	/*remove all votes if eDP displays are done with splash*/
-	if (dp_display_get_num_of_boot_displays()) {
-		for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
-			sde_power_data_bus_set_quota(phandle, i,
-				SDE_POWER_HANDLE_ENABLE_BUS_AB_QUOTA,
-				phandle->ib_quota[i]);
-		pm_runtime_put_sync(sde_kms->dev->dev);
-		sde_kms->splash_data.num_splash_displays--;
-	}
 
 	for (i = 0; i < MAX_DSI_DISPLAYS; i++) {
 		splash_display = &sde_kms->splash_data.splash_display[i];
@@ -3435,7 +3425,7 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 	struct msm_display_info info;
 	struct drm_encoder *encoder = NULL;
 	struct drm_crtc *crtc = NULL;
-	int i, rc = 0;
+	int i, rc = 0, splash_index = 0;
 	struct drm_display_mode *drm_mode = NULL;
 	struct drm_device *dev;
 	struct msm_drm_private *priv;
@@ -3473,7 +3463,7 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 
 	DRM_INFO("cont_splash enabled in %d of %d display(s)\n",
 				sde_kms->splash_data.num_splash_displays,
-				sde_kms->dsi_display_count);
+				sde_kms->dsi_display_count + sde_kms->dp_display_count);
 
 	/* dsi */
 	for (i = 0; i < sde_kms->dsi_display_count; ++i) {
@@ -3539,11 +3529,20 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 			mutex_unlock(&dev->mode_config.mutex);
 			return -EINVAL;
 		}
-		mutex_unlock(&dev->mode_config.mutex);
 
 		crtc->state->encoder_mask = (1 << drm_encoder_index(encoder));
+		/* get supported modes in case of external bridge panels*/
+		if (!dsi_display->panel->num_timing_nodes) {
+			connector->funcs->fill_modes(connector,
+				dev->mode_config.max_width,
+				dev->mode_config.max_height);
+			drm_mode = list_first_entry(&connector->modes,
+				struct drm_display_mode, head);
+		 }
+		 else
+			drm_mode = _sde_kms_get_splash_mode(sde_kms, connector, state);
 
-		drm_mode = _sde_kms_get_splash_mode(sde_kms, connector, state);
+		mutex_unlock(&dev->mode_config.mutex);
 		if (!drm_mode) {
 			SDE_ERROR("drm_mode not found; handoff_type:%d\n",
 					sde_kms->splash_data.type);
@@ -3598,6 +3597,19 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 		} else {
 			SDE_DEBUG("Invalid encoder\n");
 			break;
+		}
+
+		splash_display = &sde_kms->splash_data.splash_display[splash_index];
+		if (splash_display->cont_splash_enabled) {
+			priv = sde_kms->dev->dev_private;
+			encoder->crtc = priv->crtcs[splash_index];
+			splash_display->encoder =  encoder;
+
+			SDE_DEBUG("dp-display:%d splash_index:%d crtc id[%d]:%d enc id[%d]:%d\n",
+				i, splash_index, encoder->crtc->index, encoder->crtc->base.id,
+				encoder->index,	encoder->base.id);
+
+			splash_index++;
 		}
 
 		mutex_lock(&dev->mode_config.mutex);

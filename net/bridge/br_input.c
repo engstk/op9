@@ -33,6 +33,11 @@ br_netif_receive_skb(struct net *net, struct sock *sk, struct sk_buff *skb)
 /* Hook for external Multicast handler */
 br_multicast_handle_hook_t __rcu *br_multicast_handle_hook __read_mostly;
 EXPORT_SYMBOL(br_multicast_handle_hook);
+
+/* Hook for external forwarding logic */
+br_get_dst_hook_t __rcu *br_get_dst_hook __read_mostly;
+EXPORT_SYMBOL_GPL(br_get_dst_hook);
+
 #endif
 
 int br_pass_frame_up(struct sk_buff *skb)
@@ -94,6 +99,8 @@ int br_handle_frame_finish(struct net *net, struct sock *sk, struct sk_buff *skb
 	struct net_bridge *br;
 #ifdef CONFIG_HYFI_BRIDGE_HOOKS
 	br_multicast_handle_hook_t *multicast_handle_hook;
+	struct net_bridge_port *pdst = NULL;
+	br_get_dst_hook_t *get_dst_hook = rcu_dereference(br_get_dst_hook);
 #endif
 	u16 vid = 0;
 
@@ -168,7 +175,17 @@ int br_handle_frame_finish(struct net *net, struct sock *sk, struct sk_buff *skb
 		}
 		break;
 	case BR_PKT_UNICAST:
-		dst = br_fdb_find_rcu(br, eth_hdr(skb)->h_dest, vid);
+#ifdef CONFIG_HYFI_BRIDGE_HOOKS
+		pdst = __br_get(get_dst_hook, NULL, p, &skb);
+		if (pdst) {
+			if (!skb)
+				goto out;
+		} else
+#endif
+		{
+			dst = br_fdb_find_rcu(br, eth_hdr(skb)->h_dest, vid);
+		}
+		break;
 	default:
 		break;
 	}

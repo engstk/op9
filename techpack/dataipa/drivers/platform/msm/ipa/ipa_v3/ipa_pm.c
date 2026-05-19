@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/debugfs.h>
@@ -770,9 +771,9 @@ int ipa_pm_register(struct ipa_pm_register_params *params, u32 *hdl)
 	client->skip_clk_vote = params->skip_clk_vote;
 	client->wlock = wakeup_source_register(NULL, client->name);
 	if (!client->wlock) {
-		ipa_pm_deregister(*hdl);
 		IPA_PM_ERR("IPA wakeup source register failed %s\n",
 			client->name);
+		ipa_pm_deregister(*hdl);
 		return -ENOMEM;
 	}
 

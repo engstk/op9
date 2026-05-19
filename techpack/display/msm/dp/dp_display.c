@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -1184,6 +1184,7 @@ error_ctrl:
 static int dp_display_panel_ready(struct dp_display_private *dp)
 {
 	int rc = 0;
+	bool skip_op = is_skip_required(&dp->dp_display);
 
 	if (dp->dp_display.is_edp) {
 		rc = dp->power->edp_panel_set_gpio(dp->power, DP_GPIO_EDP_VCC_EN, true);
@@ -1201,9 +1202,9 @@ static int dp_display_panel_ready(struct dp_display_private *dp)
 			}
 			return -ETIMEDOUT;
 		}
+
+		dp->panel->init(dp->panel, skip_op);
 	}
-	if (!dp->dp_display.cont_splash_enabled)
-		dp->panel->init(dp->panel);
 
 	return 0;
 }
@@ -1247,6 +1248,8 @@ static int dp_display_host_ready(struct dp_display_private *dp)
 	dp->ctrl->abort(dp->ctrl, false);
 
 	dp->aux->init(dp->aux, dp->parser->aux_cfg, skip_op);
+	dp->panel->init(dp->panel, skip_op);
+
 	dp_display_state_add(DP_STATE_READY);
 	/* log this as it results from user action of cable connection */
 	DP_INFO("[OK]\n");
@@ -3918,6 +3921,7 @@ static int dp_display_get_display_type(struct dp_display *dp_display,
 		const char **display_type)
 {
 	struct dp_display_private *dp;
+	struct device_node *of_node;
 
 	if (!dp_display || !display_type) {
 		pr_err("invalid input\n");
@@ -3927,7 +3931,11 @@ static int dp_display_get_display_type(struct dp_display *dp_display,
 	dp = container_of(dp_display, struct dp_display_private, dp_display);
 	if (dp->parser)
 		*display_type = dp->parser->display_type;
-
+	else {
+		of_node = dp->pdev->dev.of_node;
+		*display_type = of_get_property(of_node, "qcom,display-type",
+					NULL);
+	}
 	return 0;
 }
 

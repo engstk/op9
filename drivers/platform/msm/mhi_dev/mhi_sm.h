@@ -42,7 +42,6 @@ int mhi_dev_sm_init(struct mhi_dev *dev);
 int mhi_dev_sm_exit(struct mhi_dev *dev);
 int mhi_dev_sm_set_ready(void);
 int mhi_dev_notify_sm_event(enum mhi_dev_event event);
-int mhi_dev_sm_get_mhi_state(enum mhi_dev_state *state);
 int mhi_dev_sm_syserr(void);
 void mhi_dev_sm_pcie_handler(struct ep_pcie_notify *notify);
 

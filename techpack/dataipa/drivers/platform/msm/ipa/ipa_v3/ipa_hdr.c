@@ -710,7 +710,10 @@ static int __ipa3_del_hdr_proc_ctx(u32 proc_ctx_hdl,
 		return 0;
 	}
 
-	if (release_hdr)
+	if (entry->hdr && entry == entry->hdr->proc_ctx)
+		entry->hdr->proc_ctx = NULL;
+
+	if (entry->hdr && release_hdr)
 		__ipa3_del_hdr(entry->hdr->id, false);
 
 	/* move the offset entry to appropriate free list */
@@ -774,17 +777,19 @@ int __ipa3_del_hdr(u32 hdr_hdl, bool by_user)
 		return 0;
 	}
 
+	if (entry->proc_ctx && entry == entry->proc_ctx->hdr)
+		entry->proc_ctx->hdr = NULL;
+
 	if (entry->is_hdr_proc_ctx || entry->proc_ctx) {
 		dma_unmap_single(ipa3_ctx->pdev,
 			entry->phys_base,
 			entry->hdr_len,
 			DMA_TO_DEVICE);
 		__ipa3_del_hdr_proc_ctx(entry->proc_ctx->id, false, false);
-	} else {
-		/* move the offset entry to appropriate free list */
-		list_move(&entry->offset_entry->link,
-			&htbl->head_free_offset_list[entry->offset_entry->bin]);
 	}
+	/* move the offset entry to appropriate free list */
+	list_move(&entry->offset_entry->link,
+		&htbl->head_free_offset_list[entry->offset_entry->bin]);
 	list_del(&entry->link);
 	htbl->hdr_cnt--;
 	entry->cookie = 0;

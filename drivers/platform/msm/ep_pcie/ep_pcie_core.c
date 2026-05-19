@@ -2179,6 +2179,11 @@ int ep_pcie_core_disable_endpoint(void)
 	if (atomic_read(&dev->host_wake_pending)) {
 		EP_PCIE_DBG(dev, "PCIe V%d: wake pending, init wakeup\n",
 			dev->rev);
+		/*
+		 * Clear the wake pending otherwise ep_pcie_core_wakeup_host_internal
+		 * will return without WAKE toggle
+		 */
+		atomic_set(&dev->host_wake_pending, 0);
 		ep_pcie_core_wakeup_host_internal(EP_PCIE_EVENT_PM_D3_COLD);
 	}
 

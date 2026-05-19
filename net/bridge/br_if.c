@@ -695,6 +695,7 @@ int br_add_if(struct net_bridge *br, struct net_device *dev,
 	br_set_gso_limits(br);
 
 	kobject_uevent(&p->kobj, KOBJ_ADD);
+	call_netdevice_notifiers(NETDEV_BR_JOIN, dev);
 
 	return 0;
 
@@ -731,6 +732,8 @@ int br_del_if(struct net_bridge *br, struct net_device *dev)
 	p = br_port_get_rtnl(dev);
 	if (!p || p->br != br)
 		return -EINVAL;
+
+	call_netdevice_notifiers(NETDEV_BR_LEAVE, dev);
 
 	/* Since more than one interface can be attached to a bridge,
 	 * there still maybe an alternate path for netconsole to use;

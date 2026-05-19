@@ -12,6 +12,7 @@
 #include "mhi_hwio.h"
 #include "mhi_sm.h"
 #include <linux/interrupt.h>
+#include <linux/delay.h>
 
 #define MHI_SM_DBG(fmt, args...) \
 	mhi_log(MHI_MSG_DBG, fmt, ##args)
@@ -28,7 +29,11 @@
 #define PCIE_EP_TIMER_US		500000000
 #define MHI_IPA_DISABLE_DELAY_MS	10
 #define MHI_IPA_DISABLE_COUNTER		20
+/* Maximum wait time for D state transitions to D3hot */
+#define M3_DO_WAKEUP_TIMEOUT_MS		2500
 
+static void wait_d3_and_wakeup(struct work_struct *work);
+static int mhi_dev_sm_get_mhi_pcie_states(uint32_t *mstate, uint32_t *dstate);
 
 static inline const char *mhi_sm_dev_event_str(enum mhi_dev_event state)
 {
@@ -235,6 +240,8 @@ struct mhi_sm_dev {
 	struct mutex mhi_state_lock;
 	bool syserr_occurred;
 	struct workqueue_struct *mhi_sm_wq;
+	struct workqueue_struct *mhi_wake_wq;
+	struct work_struct mhi_wake_work;
 	atomic_t pending_device_events;
 	atomic_t pending_pcie_events;
 	struct mhi_sm_stats stats;
@@ -734,12 +741,12 @@ exit:
  * mhi_sm_wakeup_host() - wakeup MHI-host
  *@event: MHI state chenge event
  *
- * Sends wekup event to MHI-host via EP-PCIe, in case MHI is in M3 state.
+ * Sends wakeup event to MHI-host via EP-PCIe, in case MHI is in M3 state.
  *
  * Return:	0:success
  *		negative: failure
  */
-static int mhi_sm_wakeup_host(enum mhi_dev_event event)
+static int mhi_sm_wakeup_host(void)
 {
 	int res = 0;
 	enum ep_pcie_event pcie_event;
@@ -754,7 +761,8 @@ static int mhi_sm_wakeup_host(enum mhi_dev_event event)
 	} else if (mhi_sm_ctx->mhi_state == MHI_DEV_M3_STATE) {
 		/*
 		 * Check and send D3_HOT to enable waking up the host
-		 * using inband PME.
+		 * using inband PME if the host is in D3_HOT state, otherwise
+		 * send D3_COLD to wake up the host.
 		 */
 		if (mhi_sm_ctx->d_state == MHI_SM_EP_PCIE_D3_HOT_STATE)
 			pcie_event = EP_PCIE_EVENT_PM_D3_HOT;
@@ -906,9 +914,7 @@ static void mhi_sm_dev_event_manager(struct work_struct *work)
 		break;
 	case MHI_DEV_EVENT_HW_ACC_WAKEUP:
 	case MHI_DEV_EVENT_CORE_WAKEUP:
-		res = mhi_sm_wakeup_host(chg_event->event);
-		if (res)
-			MHI_SM_ERR("Failed to wakeup MHI host\n");
+		queue_work(mhi_sm_ctx->mhi_wake_wq, &mhi_sm_ctx->mhi_wake_work);
 		break;
 	case MHI_DEV_EVENT_CTRL_TRIG:
 	case MHI_DEV_EVENT_M1_STATE:
@@ -1119,8 +1125,18 @@ int mhi_dev_sm_init(struct mhi_dev *mhi_dev)
 	if (!mhi_sm_ctx->mhi_sm_wq) {
 		MHI_SM_ERR("Failed to create singlethread_workqueue: sm_wq\n");
 		res = -ENOMEM;
-		goto fail_init_wq;
+		goto fail_init_sm_wq;
 	}
+
+	if (!mhi_sm_ctx->mhi_wake_wq)
+		mhi_sm_ctx->mhi_wake_wq = alloc_workqueue(
+			"mhi_wake_wq", WQ_HIGHPRI | WQ_UNBOUND, 1);
+	if (!mhi_sm_ctx->mhi_wake_wq) {
+		MHI_SM_ERR("Failed to create singlethread_workqueue: wake_wq\n");
+		res = -ENOMEM;
+		goto fail_init_wake_wq;
+	}
+	INIT_WORK(&mhi_sm_ctx->mhi_wake_work, wait_d3_and_wakeup);
 
 	mutex_init(&mhi_sm_ctx->mhi_state_lock);
 	mhi_sm_ctx->mhi_dev = mhi_dev;
@@ -1134,7 +1150,10 @@ int mhi_dev_sm_init(struct mhi_dev *mhi_dev)
 	MHI_SM_FUNC_EXIT();
 	return 0;
 
-fail_init_wq:
+fail_init_wake_wq:
+	flush_workqueue(mhi_sm_ctx->mhi_sm_wq);
+	destroy_workqueue(mhi_sm_ctx->mhi_sm_wq);
+fail_init_sm_wq:
 	mhi_sm_ctx = NULL;
 	mhi_sm_debugfs_destroy();
 	return res;
@@ -1162,20 +1181,20 @@ int mhi_dev_sm_exit(struct mhi_dev *mhi_dev)
 EXPORT_SYMBOL(mhi_dev_sm_exit);
 
 /**
- * mhi_dev_sm_get_mhi_state() -Get current MHI state.
+ * mhi_dev_sm_get_mhi_pcie_states() -Get current MHI and Pcie states.
  * @state: return param
  *
- * Returns the current MHI state of the state machine.
+ * Returns the current MHI and PCIe states of the state machine.
  *
  * Return:	0 success
  *		-EINVAL: invalid param
  *		-EFAULT: state machine isn't initialized
  */
-int mhi_dev_sm_get_mhi_state(enum mhi_dev_state *state)
+static int mhi_dev_sm_get_mhi_pcie_states(uint32_t *mstate, uint32_t *dstate)
 {
 	MHI_SM_FUNC_ENTRY();
 
-	if (!state) {
+	if (!mstate || !dstate) {
 		MHI_SM_ERR("Fail: Null argument\n");
 		return -EINVAL;
 	}
@@ -1183,15 +1202,60 @@ int mhi_dev_sm_get_mhi_state(enum mhi_dev_state *state)
 		MHI_SM_ERR("Fail: MHI SM is not initialized\n");
 		return -EFAULT;
 	}
-	*state = mhi_sm_ctx->mhi_state;
+	mutex_lock(&mhi_sm_ctx->mhi_state_lock);
+	*mstate = mhi_sm_ctx->mhi_state;
+	*dstate = mhi_sm_ctx->d_state;
+	mutex_unlock(&mhi_sm_ctx->mhi_state_lock);
 	MHI_SM_DBG("state machine states are: %s and %s\n",
-		mhi_sm_mstate_str(*state),
-		mhi_sm_dstate_str(mhi_sm_ctx->d_state));
+		mhi_sm_mstate_str(*mstate),
+		mhi_sm_dstate_str(*dstate));
 
 	MHI_SM_FUNC_EXIT();
 	return 0;
 }
-EXPORT_SYMBOL(mhi_dev_sm_get_mhi_state);
+
+static void wait_d3_and_wakeup(struct work_struct *work)
+{
+	struct mhi_sm_dev *mhi_sm_ctx = container_of(work, struct mhi_sm_dev, mhi_wake_work);
+	enum mhi_dev_state mstate;
+	enum mhi_sm_ep_pcie_state dstate;
+	ktime_t timeout = 0;
+
+	if (mhi_dev_sm_get_mhi_pcie_states(&mstate, &dstate)) {
+		MHI_SM_ERR("Unable to read states\n");
+		return;
+	}
+	/*
+	 * Handle host wakeup in M3 + D0 states.
+	 * When a MHI WAKE request is received while device is in D0,
+	 * wait for D3 and wakeup the host using inband PME.
+	 * If the MHI state changes to M0 while waiting for D3,
+	 * exit, since both MHI and the device are in active state
+	 */
+	if (dstate == MHI_SM_EP_PCIE_D0_STATE) {
+		timeout = ktime_add_ms(ktime_get(), M3_DO_WAKEUP_TIMEOUT_MS);
+		while (1) {
+			mhi_dev_sm_get_mhi_pcie_states(&mstate, &dstate);
+			if (mstate == MHI_DEV_M0_STATE) {
+				MHI_SM_DBG("M0 state received\n");
+				return;
+			}
+			if (dstate == MHI_SM_EP_PCIE_D3_HOT_STATE ||
+				dstate == MHI_SM_EP_PCIE_D3_COLD_STATE) {
+				MHI_SM_DBG("D3 state received\n");
+				goto send_host_wakeup;
+			}
+			if (ktime_after(ktime_get(), timeout)) {
+				MHI_SM_ERR("Neither received D3 nor M0 in stipulated time\n");
+				return;
+			}
+			usleep_range(1000, 2000);
+		}
+	}
+send_host_wakeup:
+	if (dstate == MHI_SM_EP_PCIE_D3_HOT_STATE || dstate == MHI_SM_EP_PCIE_D3_COLD_STATE)
+		mhi_sm_wakeup_host();
+}
 
 /**
  * mhi_dev_sm_set_ready() -Set MHI state to ready.

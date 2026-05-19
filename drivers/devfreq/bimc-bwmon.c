@@ -882,7 +882,7 @@ int __suspend_bw_hwmon(struct bw_hwmon *hw, enum mon_reg_type type)
 	struct bwmon *m = to_bwmon(hw);
 
 	mon_irq_disable(m, type);
-	free_irq(m->irq, m);
+	disable_irq(m->irq);
 	mon_disable(m, type);
 	mon_irq_clear(m, type);
 
@@ -908,7 +908,6 @@ static __always_inline
 int __resume_bw_hwmon(struct bw_hwmon *hw, enum mon_reg_type type)
 {
 	struct bwmon *m = to_bwmon(hw);
-	int ret;
 	irq_handler_t handler;
 
 	switch (type) {
@@ -924,15 +923,7 @@ int __resume_bw_hwmon(struct bw_hwmon *hw, enum mon_reg_type type)
 	}
 
 	mon_clear(m, false, type);
-	ret = request_threaded_irq(m->irq, handler, bwmon_intr_thread,
-				  IRQF_ONESHOT | IRQF_SHARED,
-				  dev_name(m->dev), m);
-	if (ret < 0) {
-		dev_err(m->dev, "Unable to register interrupt handler! (%d)\n",
-			ret);
-		return ret;
-	}
-
+	enable_irq(m->irq);
 	mon_irq_enable(m, type);
 	mon_enable(m, type);
 
