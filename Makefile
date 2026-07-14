@@ -1039,7 +1039,6 @@ endif
 ifdef CONFIG_LTO_CLANG
 ifdef CONFIG_THINLTO
 CC_FLAGS_LTO_CLANG := -flto=thin $(call cc-option, -fsplit-lto-unit)
-KBUILD_LDFLAGS	+= --thinlto-cache-dir=.thinlto-cache
 else
 CC_FLAGS_LTO_CLANG := -flto
 endif
@@ -1056,7 +1055,8 @@ endif
 
 ifdef CONFIG_LTO
 CC_FLAGS_LTO	:= $(CC_FLAGS_LTO_CLANG)
-KBUILD_CFLAGS	+= $(CC_FLAGS_LTO)
+KBUILD_CFLAGS	+= -fno-lto $(CC_FLAGS_LTO)
+KBUILD_AFLAGS	+= -fno-lto
 export CC_FLAGS_LTO
 endif
 
@@ -1109,15 +1109,6 @@ KBUILD_CFLAGS += $(call cc-disable-warning, maybe-uninitialized)
 # disable invalid "can't wrap" optimizations for signed / pointers
 KBUILD_CFLAGS	+= $(call cc-option,-fno-strict-overflow)
 
-# clang sets -fmerge-all-constants by default as optimization, but this
-# is non-conforming behavior for C and in fact breaks the kernel, so we
-# need to disable it here generally.
-KBUILD_CFLAGS	+= $(call cc-option,-fno-merge-all-constants)
-
-# for gcc -fno-merge-all-constants disables everything, but it is fine
-# to have actual conforming behavior enabled.
-KBUILD_CFLAGS	+= $(call cc-option,-fmerge-constants)
-
 # Make sure -fstack-check isn't enabled (like gentoo apparently did)
 KBUILD_CFLAGS  += $(call cc-option,-fno-stack-check,)
 
@@ -1159,7 +1150,8 @@ LDFLAGS_vmlinux	+= $(call ld-option, -X,)
 endif
 
 ifeq ($(CONFIG_RELR),y)
-LDFLAGS_vmlinux	+= --pack-dyn-relocs=relr --use-android-relr-tags
+# ld.lld before 15 did not support -z pack-relative-relocs.
+LDFLAGS_vmlinux	+= $(call ld-option,--pack-dyn-relocs=relr,-z pack-relative-relocs)
 endif
 
 # userspace programs are linked via the compiler, use the correct linker
